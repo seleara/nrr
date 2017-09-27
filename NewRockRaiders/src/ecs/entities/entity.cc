@@ -17,4 +17,5 @@ Entity::Entity(Entity &&entity) : id_(std::move(entity.id_)), manager_(std::move
 Entity &Entity::operator=(const Entity &other) {
 	id_ = other.id_;
 	manager_ = other.manager_;
+	return *this;
 }

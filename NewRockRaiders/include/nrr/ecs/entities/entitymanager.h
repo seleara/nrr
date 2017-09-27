@@ -10,6 +10,8 @@ public:
 	Entity wrap(EntityID id);
 
 	Entity create();
+
+
 private:
 	friend class Entity;
 };

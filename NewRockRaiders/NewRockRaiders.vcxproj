@@ -58,15 +58,21 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="NrrShared.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="NrrShared.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\lib\propertysheets\OpenGL.x64.props" />
+    <Import Project="NrrShared.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\lib\propertysheets\OpenGL.x64.props" />
+    <Import Project="NrrShared.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
@@ -111,6 +117,38 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="NrrShared.props" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\libraries\imgui\imgui.cpp" />
+    <ClCompile Include="..\libraries\imgui\imgui_draw.cpp" />
+    <ClCompile Include="include\nrr\imgui\glimgui.cc" />
+    <ClCompile Include="src\ecs\common\basepool.cc" />
+    <ClCompile Include="src\ecs\entities\entity.cc" />
+    <ClCompile Include="src\engine.cc" />
+    <ClCompile Include="src\main.cc" />
+    <ClCompile Include="src\resource\wadarchive.cc" />
+    <ClCompile Include="src\window\gl\glwindow.cc" />
+    <ClCompile Include="src\window\window.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\nrr\debug\archiveviewer.h" />
+    <ClInclude Include="include\nrr\ecs\common\basepool.h" />
+    <ClInclude Include="include\nrr\ecs\common\defines.h" />
+    <ClInclude Include="include\nrr\ecs\common\pool.h" />
+    <ClInclude Include="include\nrr\ecs\entities\entity.h" />
+    <ClInclude Include="include\nrr\ecs\entities\entitymanager.h" />
+    <ClInclude Include="include\nrr\engine.h" />
+    <ClInclude Include="include\nrr\ecs\components\basecomponent.h" />
+    <ClInclude Include="include\nrr\ecs\components\component.h" />
+    <ClInclude Include="include\nrr\imgui\glimgui.h" />
+    <ClInclude Include="include\nrr\model\formats\lightwavemodel.h" />
+    <ClInclude Include="include\nrr\model\model.h" />
+    <ClInclude Include="include\nrr\resource\resource.h" />
+    <ClInclude Include="include\nrr\resource\resourceloader.h" />
+    <ClInclude Include="include\nrr\resource\wadarchive.h" />
+    <ClInclude Include="include\nrr\window\gl\glwindow.h" />
+    <ClInclude Include="include\nrr\window\window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
