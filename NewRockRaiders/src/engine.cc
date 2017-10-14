@@ -2,12 +2,15 @@
 
 #include <nrr/resource/wadarchive.h>
 #include <nrr/debug/archiveviewer.h>
+#include <nrr/debug/glviewer.h>
 
 #include <imgui/imgui.h>
 #include <imgui/examples/opengl3_example/imgui_impl_glfw_gl3.h>
 
 #include <iostream>
 #include <sstream>
+
+#include <nrr/resource/shader/shader.h>
 
 int Engine::run() {
 	if (!initialize()) return -1;
@@ -17,6 +20,10 @@ int Engine::run() {
 	archive.append("data/LegoRR1.wad");
 
 	ArchiveViewer archiveViewer(archive);
+	OpenGLViewer glViewer;
+
+	Shader spriteShader;
+	spriteShader.load(archive, "data/shaders/sprite.glsl");
 
 	WindowEvent event;
 	while (window_.isOpen()) {
@@ -59,6 +66,7 @@ int Engine::run() {
 		ImGui::EndGroup();
 
 		archiveViewer.draw();
+		glViewer.draw();
 
 		ImGui::Render();
 

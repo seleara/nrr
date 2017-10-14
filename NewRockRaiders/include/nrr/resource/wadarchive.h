@@ -32,6 +32,14 @@ private:
 		return false;
 	}
 
+	std::shared_ptr<ArchiveEntry> tryGet(const std::string &path) const {
+		auto it = files_.find(path);
+		if (it == files_.end()) {
+			return nullptr;
+		}
+		return it->second.lock();
+	}
+
 	int currentStreamIndex_ = -1;
 	std::vector<std::ifstream> streams_;
 	std::vector<std::string> filePaths_;

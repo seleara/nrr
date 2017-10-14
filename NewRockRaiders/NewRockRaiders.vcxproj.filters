@@ -16,6 +16,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="NrrShared.props" />
+    <None Include="data\shaders\sprite.glsl" />
+    <None Include="data\shaders\common\common2d.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cc">
@@ -46,6 +48,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="include\nrr\imgui\glimgui.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\resource\texture\texture.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\resource\shader\gl\glshader.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\resource\shader\shader.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -99,6 +110,27 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\nrr\debug\archiveviewer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\resource\texture\texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\resource\texture\gl\gltexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\stb\stb_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\debug\glviewer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\resource\shader\gl\glshader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\resource\shader\shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\util\string.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

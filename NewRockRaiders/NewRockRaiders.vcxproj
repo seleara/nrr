@@ -117,6 +117,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="data\shaders\common\common2d.glsl" />
+    <None Include="data\shaders\sprite.glsl" />
     <None Include="NrrShared.props" />
   </ItemGroup>
   <ItemGroup>
@@ -127,12 +129,16 @@
     <ClCompile Include="src\ecs\entities\entity.cc" />
     <ClCompile Include="src\engine.cc" />
     <ClCompile Include="src\main.cc" />
+    <ClCompile Include="src\resource\texture\texture.cc" />
     <ClCompile Include="src\resource\wadarchive.cc" />
+    <ClCompile Include="src\resource\shader\gl\glshader.cc" />
+    <ClCompile Include="src\resource\shader\shader.cc" />
     <ClCompile Include="src\window\gl\glwindow.cc" />
     <ClCompile Include="src\window\window.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\nrr\debug\archiveviewer.h" />
+    <ClInclude Include="include\nrr\debug\glviewer.h" />
     <ClInclude Include="include\nrr\ecs\common\basepool.h" />
     <ClInclude Include="include\nrr\ecs\common\defines.h" />
     <ClInclude Include="include\nrr\ecs\common\pool.h" />
@@ -146,7 +152,13 @@
     <ClInclude Include="include\nrr\model\model.h" />
     <ClInclude Include="include\nrr\resource\resource.h" />
     <ClInclude Include="include\nrr\resource\resourceloader.h" />
+    <ClInclude Include="include\nrr\resource\texture\gl\gltexture.h" />
+    <ClInclude Include="include\nrr\resource\texture\texture.h" />
     <ClInclude Include="include\nrr\resource\wadarchive.h" />
+    <ClInclude Include="include\nrr\resource\shader\gl\glshader.h" />
+    <ClInclude Include="include\nrr\resource\shader\shader.h" />
+    <ClInclude Include="include\nrr\stb\stb_image.h" />
+    <ClInclude Include="include\nrr\util\string.h" />
     <ClInclude Include="include\nrr\window\gl\glwindow.h" />
     <ClInclude Include="include\nrr\window\window.h" />
   </ItemGroup>

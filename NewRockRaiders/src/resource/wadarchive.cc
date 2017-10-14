@@ -1,5 +1,6 @@
 #include <nrr/resource/wadarchive.h>
 
+#include <algorithm>
 #include <iostream>
 #include <vector>
 
@@ -24,11 +25,19 @@ void WadArchive::append(const std::string &path) {
 	filePaths_.reserve(header.fileCount);
 
 	files_.reserve(files_.size() + header.fileCount);
+	auto oldEntriesSize = entries_.size();
+	entries_.reserve(entries_.size() + header.fileCount);
 	std::string filePath;
 	for (int i = 0; i < header.fileCount; ++i) {
 		std::getline(ifs, filePath, '\0');
-		std::shared_ptr<ArchiveEntry> entry = std::make_shared<ArchiveEntry>();
+		/*auto entry = tryGet(filePath);
+		if (!entry) {
+			entry = std::make_shared<ArchiveEntry>();
+			entries_.push_back(entry);
+		}*/
+		auto entry = std::make_shared<ArchiveEntry>();
 		entries_.push_back(entry);
+		std::transform(filePath.begin(), filePath.end(), filePath.begin(), ::tolower);
 		bool replaced = insertOrReplace(files_, filePath, std::weak_ptr<ArchiveEntry>(entry));
 		if (replaced) {
 			std::cout << "Warning: File '" << filePath << "' in archive '" << path << "' replaced previously existing file.\n";
@@ -38,6 +47,7 @@ void WadArchive::append(const std::string &path) {
 	originalFilePaths_.reserve(originalFilePaths_.size() + header.fileCount);
 	for (int i = 0; i < header.fileCount; ++i) {
 		std::getline(ifs, filePath, '\0');
+		std::transform(filePath.begin(), filePath.end(), filePath.begin(), ::tolower);
 		bool replaced = insertOrReplace(originalFilePaths_, filePath, filePaths_[i]);
 		if (replaced) {
 			std::cout << "Warning: File '" << filePath << "' in archive '" << path << "' replaced previously existing file.\n";
@@ -47,11 +57,12 @@ void WadArchive::append(const std::string &path) {
 	char *infoBuffer = new char[header.fileCount * 0x10];
 	ifs.read(infoBuffer, header.fileCount * 0x10);
 	for (int i = 0; i < header.fileCount; ++i) {
-		entries_[i]->version = *(uint32_t *)(infoBuffer + (i * 0x10) + 0x0);
-		entries_[i]->size = *(uint32_t *)(infoBuffer + (i * 0x10) + 0x4);
-		entries_[i]->size = *(uint32_t *)(infoBuffer + (i * 0x10) + 0x8);
-		entries_[i]->offset = *(uint32_t *)(infoBuffer + (i * 0x10) + 0xc);
-		entries_[i]->streamIndex = currentStreamIndex_;
+		int eid = oldEntriesSize + i;
+		entries_[eid]->version = *(uint32_t *)(infoBuffer + (i * 0x10) + 0x0);
+		entries_[eid]->size = *(uint32_t *)(infoBuffer + (i * 0x10) + 0x4);
+		entries_[eid]->size = *(uint32_t *)(infoBuffer + (i * 0x10) + 0x8);
+		entries_[eid]->offset = *(uint32_t *)(infoBuffer + (i * 0x10) + 0xc);
+		entries_[eid]->streamIndex = currentStreamIndex_;
 	}
 
 	delete[] infoBuffer;
