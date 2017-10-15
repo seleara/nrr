@@ -6,8 +6,8 @@
 
 #include <nrr/util/string.h>
 
-void ShaderWrapper::load(WadArchive &archive, const std::string &path) {
-	resource_ = ShaderLoader::load(archive, path);
+void ShaderWrapper::load(const std::string &path) {
+	resource_ = ShaderLoader::load(path);
 }
 
 void ShaderWrapper::bind() {

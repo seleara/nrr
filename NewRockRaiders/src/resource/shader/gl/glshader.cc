@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 
-void GLShaderResource::load(WadArchive &archive, const std::string &path) {
+void GLShaderResource::load(const std::string &path) {
 	source_ = preprocessShaderSource(path);
 
 	auto vs = glCreateShader(GL_VERTEX_SHADER);

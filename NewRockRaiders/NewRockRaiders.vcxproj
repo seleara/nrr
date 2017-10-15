@@ -129,10 +129,13 @@
     <ClCompile Include="src\ecs\entities\entity.cc" />
     <ClCompile Include="src\engine.cc" />
     <ClCompile Include="src\main.cc" />
+    <ClCompile Include="src\math\uniformbuffer.cc" />
     <ClCompile Include="src\resource\texture\texture.cc" />
     <ClCompile Include="src\resource\wadarchive.cc" />
     <ClCompile Include="src\resource\shader\gl\glshader.cc" />
     <ClCompile Include="src\resource\shader\shader.cc" />
+    <ClCompile Include="src\sprite\spritebatch.cc" />
+    <ClCompile Include="src\sprite\spriterenderingsystem.cc" />
     <ClCompile Include="src\window\gl\glwindow.cc" />
     <ClCompile Include="src\window\window.cc" />
   </ItemGroup>
@@ -142,8 +145,16 @@
     <ClInclude Include="include\nrr\ecs\common\basepool.h" />
     <ClInclude Include="include\nrr\ecs\common\defines.h" />
     <ClInclude Include="include\nrr\ecs\common\pool.h" />
+    <ClInclude Include="include\nrr\ecs\ecs.h" />
     <ClInclude Include="include\nrr\ecs\entities\entity.h" />
     <ClInclude Include="include\nrr\ecs\entities\entitymanager.h" />
+    <ClInclude Include="include\nrr\ecs\systems\basesystem.h" />
+    <ClInclude Include="include\nrr\math\transform.h" />
+    <ClInclude Include="include\nrr\math\uniformbuffer.h" />
+    <ClInclude Include="include\nrr\math\vertexbuffer.h" />
+    <ClInclude Include="include\nrr\sprite\sprite.h" />
+    <ClInclude Include="include\nrr\sprite\spriterenderingsystem.h" />
+    <ClInclude Include="include\nrr\ecs\systems\system.h" />
     <ClInclude Include="include\nrr\engine.h" />
     <ClInclude Include="include\nrr\ecs\components\basecomponent.h" />
     <ClInclude Include="include\nrr\ecs\components\component.h" />
@@ -157,6 +168,7 @@
     <ClInclude Include="include\nrr\resource\wadarchive.h" />
     <ClInclude Include="include\nrr\resource\shader\gl\glshader.h" />
     <ClInclude Include="include\nrr\resource\shader\shader.h" />
+    <ClInclude Include="include\nrr\sprite\spritebatch.h" />
     <ClInclude Include="include\nrr\stb\stb_image.h" />
     <ClInclude Include="include\nrr\util\string.h" />
     <ClInclude Include="include\nrr\window\gl\glwindow.h" />

@@ -8,6 +8,8 @@
 
 #include <imgui/imgui.h>
 #include <nrr/imgui/glimgui.h>
+#include <nrr/resource/texture/texture.h>
+#include <nrr/resource/texture/gl/gltexture.h>
 
 // GL3W/GLFW
 #include <GL/glew.h>    // This example is using gl3w to access OpenGL functions (because it is small). You may use glew/glad/glLoadGen/etc. whatever already works for you.
@@ -24,9 +26,10 @@ static GLFWwindow*  g_Window = NULL;
 static double       g_Time = 0.0f;
 static bool         g_MousePressed[3] = { false, false, false };
 static float        g_MouseWheel = 0.0f;
-static GLuint       g_FontTexture = 0;
+//static GLuint       g_FontTexture = 0;
+static Texture		g_FontTexture;
 static int          g_ShaderHandle = 0, g_VertHandle = 0, g_FragHandle = 0;
-static int          g_AttribLocationTex = 0, g_AttribLocationProjMtx = 0;
+static int          g_AttribLocationTex = 0, g_AttribLocationTexSize = 0, g_AttribLocationProjMtx = 0;
 static int          g_AttribLocationPosition = 0, g_AttribLocationUV = 0, g_AttribLocationColor = 0;
 static unsigned int g_VboHandle = 0, g_VaoHandle = 0, g_ElementsHandle = 0;
 
@@ -47,7 +50,7 @@ void ImGui_ImplGlfwGL3_RenderDrawLists(ImDrawData* draw_data)
 	GLenum last_active_texture; glGetIntegerv(GL_ACTIVE_TEXTURE, (GLint*)&last_active_texture);
 	glActiveTexture(GL_TEXTURE0);
 	GLint last_program; glGetIntegerv(GL_CURRENT_PROGRAM, &last_program);
-	GLint last_texture; glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
+	GLint last_texture; glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE, &last_texture);
 	GLint last_sampler; glGetIntegerv(GL_SAMPLER_BINDING, &last_sampler);
 	GLint last_array_buffer; glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
 	GLint last_element_array_buffer; glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &last_element_array_buffer);
@@ -109,7 +112,11 @@ void ImGui_ImplGlfwGL3_RenderDrawLists(ImDrawData* draw_data)
 				pcmd->UserCallback(cmd_list, pcmd);
 			} else
 			{
-				glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->TextureId);
+				//glBindTexture(GL_TEXTURE_RECTANGLE, (GLuint)(intptr_t)pcmd->TextureId);
+				auto *tex = (GLTextureResource *)(pcmd->TextureId);
+				tex->bind();
+				const glm::vec2 &texSize = tex->size();
+				glUniform2fv(g_AttribLocationTexSize, 1, &texSize[0]);
 				glScissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
 				glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset);
 			}
@@ -119,7 +126,7 @@ void ImGui_ImplGlfwGL3_RenderDrawLists(ImDrawData* draw_data)
 
 	// Restore modified GL state
 	glUseProgram(last_program);
-	glBindTexture(GL_TEXTURE_2D, last_texture);
+	glBindTexture(GL_TEXTURE_RECTANGLE, last_texture);
 	glBindSampler(0, last_sampler);
 	glActiveTexture(last_active_texture);
 	glBindVertexArray(last_vertex_array);
@@ -189,18 +196,19 @@ bool ImGui_ImplGlfwGL3_CreateFontsTexture()
 
 															  // Upload texture to graphics system
 	GLint last_texture;
-	glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
-	glGenTextures(1, &g_FontTexture);
-	glBindTexture(GL_TEXTURE_2D, g_FontTexture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE, &last_texture);
+	/*glGenTextures(1, &g_FontTexture);
+	glBindTexture(GL_TEXTURE_RECTANGLE, g_FontTexture);
+	glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);*/
+	g_FontTexture.rectangle().create(width, height, pixels);
 
 	// Store our identifier
-	io.Fonts->TexID = (void *)(intptr_t)g_FontTexture;
+	io.Fonts->TexID = (void *)g_FontTexture.get();
 
 	// Restore state
-	glBindTexture(GL_TEXTURE_2D, last_texture);
+	glBindTexture(GL_TEXTURE_RECTANGLE, last_texture);
 
 	return true;
 }
@@ -209,7 +217,7 @@ bool ImGui_ImplGlfwGL3_CreateDeviceObjects()
 {
 	// Backup GL state
 	GLint last_texture, last_array_buffer, last_vertex_array;
-	glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
+	glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE, &last_texture);
 	glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
 	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &last_vertex_array);
 
@@ -230,13 +238,14 @@ bool ImGui_ImplGlfwGL3_CreateDeviceObjects()
 
 	const GLchar* fragment_shader =
 		"#version 330\n"
-		"uniform sampler2D Texture;\n"
+		"uniform sampler2DRect Texture;\n"
+		"uniform vec2 TexSize;\n"
 		"in vec2 Frag_UV;\n"
 		"in vec4 Frag_Color;\n"
 		"out vec4 Out_Color;\n"
 		"void main()\n"
 		"{\n"
-		"	Out_Color = Frag_Color * texture( Texture, Frag_UV.st);\n"
+		"	Out_Color = Frag_Color * texture( Texture, vec2(Frag_UV.s * TexSize.x, Frag_UV.t * TexSize.y));\n"
 		"}\n";
 
 	g_ShaderHandle = glCreateProgram();
@@ -251,6 +260,7 @@ bool ImGui_ImplGlfwGL3_CreateDeviceObjects()
 	glLinkProgram(g_ShaderHandle);
 
 	g_AttribLocationTex = glGetUniformLocation(g_ShaderHandle, "Texture");
+	g_AttribLocationTexSize = glGetUniformLocation(g_ShaderHandle, "TexSize");
 	g_AttribLocationProjMtx = glGetUniformLocation(g_ShaderHandle, "ProjMtx");
 	g_AttribLocationPosition = glGetAttribLocation(g_ShaderHandle, "Position");
 	g_AttribLocationUV = glGetAttribLocation(g_ShaderHandle, "UV");
@@ -275,7 +285,7 @@ bool ImGui_ImplGlfwGL3_CreateDeviceObjects()
 	ImGui_ImplGlfwGL3_CreateFontsTexture();
 
 	// Restore modified GL state
-	glBindTexture(GL_TEXTURE_2D, last_texture);
+	glBindTexture(GL_TEXTURE_RECTANGLE, last_texture);
 	glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
 	glBindVertexArray(last_vertex_array);
 
@@ -300,11 +310,11 @@ void    ImGui_ImplGlfwGL3_InvalidateDeviceObjects()
 	if (g_ShaderHandle) glDeleteProgram(g_ShaderHandle);
 	g_ShaderHandle = 0;
 
-	if (g_FontTexture)
+	if (g_FontTexture.valid())
 	{
-		glDeleteTextures(1, &g_FontTexture);
+		//glDeleteTextures(1, &g_FontTexture);
 		ImGui::GetIO().Fonts->TexID = 0;
-		g_FontTexture = 0;
+		//g_FontTexture = 0;
 	}
 }
 
@@ -360,7 +370,7 @@ void ImGui_ImplGlfwGL3_Shutdown()
 
 void ImGui_ImplGlfwGL3_NewFrame()
 {
-	if (!g_FontTexture)
+	if (!g_FontTexture.valid())
 		ImGui_ImplGlfwGL3_CreateDeviceObjects();
 
 	ImGuiIO& io = ImGui::GetIO();

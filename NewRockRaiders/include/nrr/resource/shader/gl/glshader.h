@@ -8,7 +8,7 @@ class GLShaderResource : public ShaderResource {
 public:
 	void bind() override;
 	void release() override;
-	void load(WadArchive &archive, const std::string &filename) override;
+	void load(const std::string &filename) override;
 private:
 	bool compileShader(GLuint shader, const std::string &source, const std::string &guard);
 	bool errorCheckShader(GLuint shader);

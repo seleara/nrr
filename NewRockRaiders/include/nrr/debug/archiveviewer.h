@@ -66,7 +66,7 @@ public:
 					case 2: {
 						auto img = imagePreview_;
 						if (img->id() != 0) {
-							ImGui::Image((void *)(img->id()), ImVec2(img->size().x, img->size().y));
+							ImGui::Image((void *)(img), ImVec2(img->size().x, img->size().y));
 						}
 						break; }
 					}
@@ -107,7 +107,7 @@ private:
 		if (ext == "bmp" || ext == "BMP") {
 			filePreview_.clear();
 			fileInfo_ = &entry;
-			imagePreview_ = (GLTextureResource *)TextureLoader::load(archive_, node.fullName).get();
+			imagePreview_ = (GLTextureResource *)TextureLoader::load(archive_, node.fullName, TextureType::Rectangle).get();
 			previewType_ = 2;
 			return;
 		}

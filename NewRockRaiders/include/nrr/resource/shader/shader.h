@@ -22,7 +22,7 @@ private:
 
 class ShaderWrapper {
 public:
-	void load(WadArchive &archive, const std::string &path);
+	void load(const std::string &path);
 	void bind();
 	void release();
 private:

@@ -4,6 +4,8 @@
 
 template <typename T>
 class Pool : public BasePool {
+public:
+	explicit Pool(size_t objectsPerBlock) : BasePool(sizeof(T), objectsPerBlock) {}
 	virtual ~Pool() {}
 
 	void destroy(int n) override {

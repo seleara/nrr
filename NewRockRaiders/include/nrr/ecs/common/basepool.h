@@ -15,7 +15,7 @@ public:
 	const void *get(int n) const;
 
 	virtual void destroy(int n) = 0;
-private:
+protected:
 	size_t objectSize_;
 	size_t objectsPerBlock_;
 	size_t blockCount_;

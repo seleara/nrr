@@ -7,6 +7,7 @@
 class GLTextureResource : public TextureResource {
 public:
 	void load(WadArchive &archive, const std::string &path) override;
+	void create(int width, int height, unsigned char *pixels);
 	void bind() override;
 	void release() override;
 

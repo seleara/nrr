@@ -59,6 +59,15 @@
     <ClCompile Include="src\resource\shader\shader.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\sprite\spriterenderingsystem.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sprite\spritebatch.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\math\uniformbuffer.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\nrr\ecs\entities\entity.h">
@@ -131,6 +140,33 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\nrr\util\string.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\ecs\systems\system.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\ecs\systems\basesystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\sprite\spritebatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\sprite\spriterenderingsystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\sprite\sprite.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\math\transform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\ecs\ecs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\math\vertexbuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\math\uniformbuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

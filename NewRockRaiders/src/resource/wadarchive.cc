@@ -38,6 +38,7 @@ void WadArchive::append(const std::string &path) {
 		auto entry = std::make_shared<ArchiveEntry>();
 		entries_.push_back(entry);
 		std::transform(filePath.begin(), filePath.end(), filePath.begin(), ::tolower);
+		std::replace(filePath.begin(), filePath.end(), '\\', '/');
 		bool replaced = insertOrReplace(files_, filePath, std::weak_ptr<ArchiveEntry>(entry));
 		if (replaced) {
 			std::cout << "Warning: File '" << filePath << "' in archive '" << path << "' replaced previously existing file.\n";
@@ -48,6 +49,7 @@ void WadArchive::append(const std::string &path) {
 	for (int i = 0; i < header.fileCount; ++i) {
 		std::getline(ifs, filePath, '\0');
 		std::transform(filePath.begin(), filePath.end(), filePath.begin(), ::tolower);
+		std::replace(filePath.begin(), filePath.end(), '\\', '/');
 		bool replaced = insertOrReplace(originalFilePaths_, filePath, filePaths_[i]);
 		if (replaced) {
 			std::cout << "Warning: File '" << filePath << "' in archive '" << path << "' replaced previously existing file.\n";
@@ -69,9 +71,12 @@ void WadArchive::append(const std::string &path) {
 }
 
 const ArchiveEntry &WadArchive::get(const std::string &path) const {
-	auto it = files_.find(path);
+	std::string filePath = path;
+	std::transform(filePath.begin(), filePath.end(), filePath.begin(), ::tolower);
+	std::replace(filePath.begin(), filePath.end(), '\\', '/');
+	auto it = files_.find(filePath);
 	if (it == files_.end()) {
-		throw std::runtime_error("Cannot find file '" + path + "'.");
+		throw std::runtime_error("Cannot find file '" + filePath + "'.");
 	}
 	auto ptr = it->second.lock();
 	return *ptr;

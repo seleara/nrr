@@ -54,8 +54,8 @@ public:
 			ImGui::Separator();
 			ImGui::BeginChild("preview", ImVec2(0, 0), false);
 			//ImGui::TextWrapped(filePreview_.c_str());
-			auto img = (GLTextureResource *)selectedTexture_.get();
-			ImGui::Image((void *)(img->id()), ImVec2(img->size().x, img->size().y));
+			auto *img = (GLTextureResource *)selectedTexture_.get();
+			ImGui::Image((void *)(img), ImVec2(img->size().x, img->size().y));
 			ImGui::EndChild();
 		} else if (selectedShader_) {
 			//ImGui::Text(selectedTexture_->baseName.c_str());

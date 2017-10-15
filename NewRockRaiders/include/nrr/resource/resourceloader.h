@@ -21,6 +21,17 @@ public:
 		}
 		return it->second;
 	}
+	static std::shared_ptr<BaseType> load(std::string path) {
+		std::transform(path.begin(), path.end(), path.begin(), ::tolower);
+		auto it = resources_.find(path);
+		if (it == resources_.end()) {
+			std::shared_ptr<BaseType> resource = std::make_shared<GLType>();
+			resource->load(path);
+			resources_.insert({ path, resource });
+			return resource;
+		}
+		return it->second;
+	}
 	static void unload(const std::string &path) {
 
 	}

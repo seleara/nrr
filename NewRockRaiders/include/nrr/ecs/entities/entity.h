@@ -18,7 +18,12 @@ public:
 
 	template <typename C, typename ...Args>
 	ComponentWrapper<C> add(Args && ...args) {
-		return manager_.add<C>(id_, ...args);
+		return manager_->add<C>(id_, args...);
+	}
+
+	template <typename C>
+	ComponentWrapper<C> get() {
+		return manager_->get<C>(id_);
 	}
 private:
 	friend class EntityManager;
