@@ -31,6 +31,10 @@ void GLShaderResource::load(const std::string &path) {
 	glDeleteShader(fs);
 }
 
+int GLShaderResource::uniformLocation(const std::string &name) const {
+	return glGetUniformLocation(program_, name.c_str());
+}
+
 bool GLShaderResource::compileShader(GLuint shader, const std::string &source, const std::string &guard) {
 	std::string processed = "#version 450\n#define " + guard + "\n" + source;
 	const char *csource = processed.c_str();

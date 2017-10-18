@@ -6,7 +6,7 @@
 class SpriteRenderingSystem : public System<SpriteRenderingSystem> {
 public:
 	void update();
-	void render();
+	void render2d();
 private:
 	SpriteBatch batch_;
 };

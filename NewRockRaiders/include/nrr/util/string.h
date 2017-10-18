@@ -76,5 +76,30 @@ public:
 			return !std::isspace(c);
 		}).base(), str.end());
 	}
+
+	static inline void toLower(std::string &str) {
+		std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+	}
+
+	static inline std::string baseName(std::string str) {
+		auto baseNamePos = str.rfind('\\');
+		if (baseNamePos == std::string::npos) {
+			baseNamePos = str.rfind('/');
+		}
+		if (baseNamePos != std::string::npos) {
+			str.erase(0, baseNamePos + 1);
+		}
+		return str;
+	}
+
+	static inline std::string folder(std::string str) {
+		auto slashPos = str.rfind('/');
+		if (slashPos == std::string::npos) {
+			slashPos = str.rfind('\\');
+		}
+		if (slashPos != std::string::npos)
+			str = str.substr(0, slashPos + 1);
+		return str;
+	}
 private:
 };

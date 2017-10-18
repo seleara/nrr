@@ -10,12 +10,15 @@ public:
 	void create(int width, int height, unsigned char *pixels);
 	void bind() override;
 	void release() override;
+	glm::vec4 pixel(int x, int y) const override;
 
 	GLuint id() const;
 private:
 	friend class OpenGLViewer;
 
 	GLenum getEnum() const;
+
+	std::vector<unsigned char> pixels_;
 
 	GLuint textureId_;
 };

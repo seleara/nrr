@@ -11,6 +11,7 @@ class ShaderResource : public Resource {
 public:
 	virtual void bind() = 0;
 	virtual void release() = 0;
+	virtual int uniformLocation(const std::string &name) const = 0;
 protected:
 	// This method is very picky with #include directives, should rewrite it and make it more robust later
 	std::string preprocessShaderSource(const std::string &path);
@@ -25,6 +26,7 @@ public:
 	void load(const std::string &path);
 	void bind();
 	void release();
+	int uniformLocation(const std::string &name) const;
 private:
 	std::shared_ptr<ShaderResource> resource_;
 };

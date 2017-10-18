@@ -18,6 +18,10 @@ void ShaderWrapper::release() {
 	resource_->release();
 }
 
+int ShaderWrapper::uniformLocation(const std::string &name) const {
+	return resource_->uniformLocation(name);
+}
+
 std::string ShaderResource::preprocessShaderSource(const std::string &path) {
 	auto slash = path.rfind('/');
 	std::string dir;

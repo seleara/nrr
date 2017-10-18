@@ -29,7 +29,8 @@ static float        g_MouseWheel = 0.0f;
 //static GLuint       g_FontTexture = 0;
 static Texture		g_FontTexture;
 static int          g_ShaderHandle = 0, g_VertHandle = 0, g_FragHandle = 0;
-static int          g_AttribLocationTex = 0, g_AttribLocationTexSize = 0, g_AttribLocationProjMtx = 0;
+static int          g_AttribLocationTex = 0, g_AttribLocationTex2D = 0, g_AttribLocationTexSize = 0, g_AttribLocationProjMtx = 0;
+static int			g_AttribLocationTexIndex = 0;
 static int          g_AttribLocationPosition = 0, g_AttribLocationUV = 0, g_AttribLocationColor = 0;
 static unsigned int g_VboHandle = 0, g_VaoHandle = 0, g_ElementsHandle = 0;
 
@@ -89,6 +90,7 @@ void ImGui_ImplGlfwGL3_RenderDrawLists(ImDrawData* draw_data)
 	};
 	glUseProgram(g_ShaderHandle);
 	glUniform1i(g_AttribLocationTex, 0);
+	glUniform1i(g_AttribLocationTex2D, 1);
 	glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
 	glBindVertexArray(g_VaoHandle);
 	glBindSampler(0, 0); // Rely on combined texture/sampler state.
@@ -114,9 +116,15 @@ void ImGui_ImplGlfwGL3_RenderDrawLists(ImDrawData* draw_data)
 			{
 				//glBindTexture(GL_TEXTURE_RECTANGLE, (GLuint)(intptr_t)pcmd->TextureId);
 				auto *tex = (GLTextureResource *)(pcmd->TextureId);
+				if (tex->type() == TextureType::Rectangle) {
+					glActiveTexture(GL_TEXTURE0 + 0);
+				} else {
+					glActiveTexture(GL_TEXTURE0 + 1);
+				}
 				tex->bind();
 				const glm::vec2 &texSize = tex->size();
 				glUniform2fv(g_AttribLocationTexSize, 1, &texSize[0]);
+				glUniform1i(g_AttribLocationTexIndex, tex->type() == TextureType::Rectangle ? 0 : 1);
 				glScissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
 				glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset);
 			}
@@ -238,14 +246,20 @@ bool ImGui_ImplGlfwGL3_CreateDeviceObjects()
 
 	const GLchar* fragment_shader =
 		"#version 330\n"
-		"uniform sampler2DRect Texture;\n"
+		"uniform sampler2DRect TextureRect;\n"
+		"uniform sampler2D Texture2D;\n"
+		"uniform int TextureIndex;\n"
 		"uniform vec2 TexSize;\n"
 		"in vec2 Frag_UV;\n"
 		"in vec4 Frag_Color;\n"
 		"out vec4 Out_Color;\n"
 		"void main()\n"
 		"{\n"
-		"	Out_Color = Frag_Color * texture( Texture, vec2(Frag_UV.s * TexSize.x, Frag_UV.t * TexSize.y));\n"
+		"	if (TextureIndex == 0) {\n"
+		"		Out_Color = Frag_Color * texture( TextureRect, vec2(Frag_UV.s * TexSize.x, Frag_UV.t * TexSize.y));\n"
+		"	} else {\n"
+		"		Out_Color = Frag_Color * texture( Texture2D, vec2(Frag_UV.s, Frag_UV.t));\n"
+		"	}\n"
 		"}\n";
 
 	g_ShaderHandle = glCreateProgram();
@@ -259,8 +273,10 @@ bool ImGui_ImplGlfwGL3_CreateDeviceObjects()
 	glAttachShader(g_ShaderHandle, g_FragHandle);
 	glLinkProgram(g_ShaderHandle);
 
-	g_AttribLocationTex = glGetUniformLocation(g_ShaderHandle, "Texture");
+	g_AttribLocationTex = glGetUniformLocation(g_ShaderHandle, "TextureRect");
+	g_AttribLocationTex2D = glGetUniformLocation(g_ShaderHandle, "Texture2D");
 	g_AttribLocationTexSize = glGetUniformLocation(g_ShaderHandle, "TexSize");
+	g_AttribLocationTexIndex = glGetUniformLocation(g_ShaderHandle, "TextureIndex");
 	g_AttribLocationProjMtx = glGetUniformLocation(g_ShaderHandle, "ProjMtx");
 	g_AttribLocationPosition = glGetAttribLocation(g_ShaderHandle, "Position");
 	g_AttribLocationUV = glGetAttribLocation(g_ShaderHandle, "UV");

@@ -8,14 +8,14 @@
 void SpriteRenderingSystem::update() {
 	batch_.clear();
 	//std::cout << "Start update.\n";
-	forEach<Transform, Sprite>([&](Transform &t, Sprite &s) {
+	forEach<TransformComponent, SpriteComponent>([&](TransformComponent &t, SpriteComponent &s) {
 		batch_.add(s, t);
 		//std::cout << "Adding sprite.\n";
 	});
 	//std::cout << "Done with update." << std::endl;
 }
 
-void SpriteRenderingSystem::render() {
-	std::cout << "Render: " << batch_.size() << "\n";
+void SpriteRenderingSystem::render2d() {
+	//std::cout << "Render: " << batch_.size() << "\n";
 	batch_.render();
 }

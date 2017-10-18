@@ -18,6 +18,9 @@
     <None Include="NrrShared.props" />
     <None Include="data\shaders\sprite.glsl" />
     <None Include="data\shaders\common\common2d.glsl" />
+    <None Include="data\shaders\common\common.glsl" />
+    <None Include="data\shaders\model.glsl" />
+    <None Include="data\shaders\common\lighting.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cc">
@@ -68,6 +71,30 @@
     <ClCompile Include="src\math\uniformbuffer.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\model\model.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\model\formats\lightwave.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui\uisystem.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\util\configparser.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\util\string.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\math\camera.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\math\time.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\math\clock.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\nrr\ecs\entities\entity.h">
@@ -98,9 +125,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\nrr\window\gl\glwindow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\nrr\model\formats\lightwavemodel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\nrr\model\model.h">
@@ -167,6 +191,39 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\nrr\math\uniformbuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\model\formats\lightwave.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\util\binaryreader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\util\endian.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\ui\widget.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\ui\uisystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\ui\image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\util\configparser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\math\camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\math\camerasystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\math\clock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\math\time.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

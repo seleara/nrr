@@ -32,7 +32,7 @@ public:
 				child.baseName = pathSplit[j].second;
 				child.fullName = path.substr(0, pathSplit[j].first);
 				child.type = (j < pathSplit.size() - 1) ? ArchiveNode::Directory : ArchiveNode::File;
-				current->children.insert({ pathSplit[j].second, child });
+				current->children.insert({ pathSplit[j].second, std::move(child) });
 				current = &current->children[pathSplit[j].second];
 			}
 		}
@@ -71,6 +71,12 @@ public:
 						break; }
 					}
 					ImGui::EndChild();
+					ImGui::Separator();
+					if (ImGui::Button("Export")) {
+						std::ofstream ofs("export/" + selectedFile_->baseName, std::ios_base::binary);
+						ofs.write(filePreview_.data(), filePreview_.size());
+						ofs.close();
+					}
 				}
 			ImGui::EndChild();
 		ImGui::End();
@@ -104,43 +110,53 @@ private:
 		}
 		const auto &entry = archive_.get(node.fullName);
 		auto ext = node.baseName.substr(node.baseName.rfind('.') + 1);
+		previewType_ = 1;
+		fileInfo_ = &entry;
 		if (ext == "bmp" || ext == "BMP") {
-			filePreview_.clear();
-			fileInfo_ = &entry;
+			//filePreview_.clear();
 			imagePreview_ = (GLTextureResource *)TextureLoader::load(archive_, node.fullName, TextureType::Rectangle).get();
 			previewType_ = 2;
-			return;
 		}
 		auto &ifs = archive_.getStream(entry);
 		filePreview_.resize(entry.size);
 		ifs.read(filePreview_.data(), entry.size);
-		fileInfo_ = &entry;
-		previewType_ = 1;
 	}
 
 	std::vector<std::pair<int, std::string>> split(const std::string &path, const std::vector<char> &seps) {
 		std::vector<std::pair<int, std::string>> output;
-		std::stringstream buffer;
+		//std::stringstream buffer;
+		//std::string buffer;
+		int bufferStart = 0;
+		int bufferSize = 0;
 		const char *c = path.data();
 		int index = 0;
 		while (*c != 0) {
 			bool found = false;
 			for (auto s : seps) {
 				if (s == *c) {
-					if (buffer.str().size() > 0)
-						output.push_back({ index, buffer.str() });
-					buffer.str("");
+					/*if (buffer.size() > 0)
+						output.push_back({ index, buffer });
+					buffer = "";*/
+					if (bufferSize > 0) {
+						output.push_back({ index, std::move(path.substr(bufferStart, bufferSize)) });
+					}
+					bufferSize = 0;
+					bufferStart = index + 1;
 					found = true;
 					break;
 				}
 			}
-			if (!found)
-				buffer << *c;
+			if (!found) {
+				//buffer += *c;
+				++bufferSize;
+			}
 			++c;
 			++index;
 		}
-		if (buffer.str().size() > 0)
-			output.push_back({ index, buffer.str() });
+		if (bufferSize > 0) {
+			//output.push_back({ index, buffer });
+			output.push_back({ index, std::move(path.substr(bufferStart, bufferSize)) });
+		}
 		return output;
 	}
 

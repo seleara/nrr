@@ -17,6 +17,9 @@ class ComponentWrapper {
 public:
 	ComponentWrapper(EntityManager *manager, EntityID id) : manager_(manager), id_(id) {}
 
+	C *ptr();
+	const C *ptr() const;
+
 	C &get();
 	const C &get() const;
 
@@ -29,13 +32,23 @@ private:
 #include <nrr/ecs/entities/entitymanager.h>
 
 template <typename C>
+C *ComponentWrapper<C>::ptr() {
+	return manager_->getPointer<C>(id_);
+}
+
+template <typename C>
+const C *ComponentWrapper<C>::ptr() const {
+	return manager_->getPointer<C>(id_);
+}
+
+template <typename C>
 C &ComponentWrapper<C>::get() {
-	return *manager_->getPointer<C>(id_);
+	return *ptr();
 }
 
 template <typename C>
 const C &ComponentWrapper<C>::get() const {
-	return *manager_->getPointer<C>(id_);
+	return *ptr();
 }
 
 template <typename C>

@@ -70,6 +70,17 @@ void WadArchive::append(const std::string &path) {
 	delete[] infoBuffer;
 }
 
+bool WadArchive::exists(const std::string &path) const {
+	std::string filePath = path;
+	std::transform(filePath.begin(), filePath.end(), filePath.begin(), ::tolower);
+	std::replace(filePath.begin(), filePath.end(), '\\', '/');
+	auto it = files_.find(filePath);
+	if (it == files_.end()) {
+		return false;
+	}
+	return true;
+}
+
 const ArchiveEntry &WadArchive::get(const std::string &path) const {
 	std::string filePath = path;
 	std::transform(filePath.begin(), filePath.end(), filePath.begin(), ::tolower);

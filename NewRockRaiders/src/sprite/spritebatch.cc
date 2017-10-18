@@ -26,7 +26,7 @@ void SpriteBatch::render() {
 	Shader shader;
 	shader.load("data/shaders/sprite.glsl");
 
-	std::cout << textures.size() << std::endl;
+	//std::cout << textures.size() << std::endl;
 
 	glDisable(GL_DEPTH_TEST);
 
@@ -49,7 +49,7 @@ void SpriteBatch::render() {
 		size_t end = (p2) ? p2->first : sprites_.size();
 
 		p.second->bind();
-		std::cout << "Draw " << (start * 6) << ", " << ((end - start) * 6) << std::endl;
+		//std::cout << "Draw " << (start * 6) << ", " << ((end - start) * 6) << std::endl;
 		vertexBuffer_.draw(Primitives::Triangles, start * 6, (end - start) * 6);
 	}
 	vertexBuffer_.release();

@@ -9,6 +9,7 @@ public:
 	void bind() override;
 	void release() override;
 	void load(const std::string &filename) override;
+	int uniformLocation(const std::string &name) const override;
 private:
 	bool compileShader(GLuint shader, const std::string &source, const std::string &guard);
 	bool errorCheckShader(GLuint shader);

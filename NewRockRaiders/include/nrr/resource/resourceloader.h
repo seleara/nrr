@@ -14,7 +14,7 @@ public:
 		std::transform(path.begin(), path.end(), path.begin(), ::tolower);
 		auto it = resources_.find(path);
 		if (it == resources_.end()) {
-			std::shared_ptr<BaseType> resource = std::make_shared<GLType>();
+			std::shared_ptr<GLType> resource = std::make_shared<GLType>();
 			resource->load(archive, path);
 			resources_.insert({ path, resource });
 			return resource;
@@ -25,7 +25,7 @@ public:
 		std::transform(path.begin(), path.end(), path.begin(), ::tolower);
 		auto it = resources_.find(path);
 		if (it == resources_.end()) {
-			std::shared_ptr<BaseType> resource = std::make_shared<GLType>();
+			std::shared_ptr<GLType> resource = std::make_shared<GLType>();
 			resource->load(path);
 			resources_.insert({ path, resource });
 			return resource;

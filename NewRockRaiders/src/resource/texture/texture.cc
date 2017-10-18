@@ -30,7 +30,10 @@ void GLTextureResource::load(WadArchive &archive, const std::string &path) {
 	glTexImage2D(texEnum, 0, GL_RGBA, size_.x, size_.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	release();
 
-	glObjectLabel(texEnum, textureId_, static_cast<GLsizei>(path.size()), path.c_str());
+	pixels_.resize(width * height * 4);
+	std::copy(data, data + (width * height * 4), pixels_.begin());
+
+	glObjectLabel(GL_TEXTURE, textureId_, static_cast<GLsizei>(path.size()), path.c_str());
 
 	stbi_image_free(data);
 }
@@ -47,6 +50,9 @@ void GLTextureResource::create(int width, int height, unsigned char *pixels) {
 	glTexParameteri(texEnum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexImage2D(texEnum, 0, GL_RGBA, size_.x, size_.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 	release();
+
+	pixels_.resize(width * height * 4);
+	std::copy(pixels, pixels + (width * height * 4), pixels_.begin());
 
 	std::string label = "Memory Texture";
 	glObjectLabel(texEnum, textureId_, static_cast<GLsizei>(label.size()), label.c_str());
@@ -68,6 +74,11 @@ GLenum GLTextureResource::getEnum() const {
 	return type_ == TextureType::Normalized ? GL_TEXTURE_2D : GL_TEXTURE_RECTANGLE;
 }
 
+glm::vec4 GLTextureResource::pixel(int x, int y) const {
+	int i = (y * size_.x + x) * 4;
+	return glm::vec4(pixels_[i + 0], pixels_[i + 1], pixels_[i + 2], pixels_[i + 3]) / 255.0f;
+}
+
 void TextureWrapper::load(WadArchive &archive, const std::string &path) {
 	resource_ = TextureLoader::load(archive, path, type_);
 }
@@ -78,12 +89,20 @@ void TextureWrapper::create(int width, int height, unsigned char *pixels) {
 	((GLTextureResource *)resource_.get())->create(width, height, pixels);
 }
 
+void TextureWrapper::saveCache(const std::string &cacheName) {
+	TextureLoader::saveCache(cacheName, resource_);
+}
+void TextureWrapper::loadCache(const std::string &cacheName) {
+	resource_ = TextureLoader::loadCache(cacheName);
+}
+
 bool TextureWrapper::valid() const {
 	if (!resource_) return false;
 	return ((GLTextureResource *)resource_.get())->id() != 0;
 }
 
 std::unordered_map<std::string, std::shared_ptr<TextureResource>> TextureLoader::textures_;
+std::unordered_map<std::string, std::shared_ptr<TextureResource>> TextureLoader::cache_;
 
 std::shared_ptr<TextureResource> TextureLoader::load(WadArchive &archive, std::string path, TextureType type) {
 	std::transform(path.begin(), path.end(), path.begin(), ::tolower);
@@ -100,4 +119,17 @@ std::shared_ptr<TextureResource> TextureLoader::load(WadArchive &archive, std::s
 
 void TextureLoader::unload(const std::string &path) {
 
+}
+
+
+std::shared_ptr<TextureResource> TextureLoader::loadCache(const std::string &cacheName) {
+	auto iter = cache_.find(cacheName);
+	if (iter == cache_.end()) {
+		return nullptr;
+	}
+	return iter->second;
+}
+
+void TextureLoader::saveCache(const std::string &cacheName, std::shared_ptr<TextureResource> resource) {
+	cache_[cacheName] = resource;
 }

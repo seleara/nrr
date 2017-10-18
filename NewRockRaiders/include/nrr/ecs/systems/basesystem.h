@@ -10,6 +10,7 @@ public:
 	virtual void update() {}
 	virtual void fixedUpdate() {}
 	virtual void render() {}
+	virtual void render2d() {}
 protected:
 	friend class EntityManager;
 	EntityManager *manager_;

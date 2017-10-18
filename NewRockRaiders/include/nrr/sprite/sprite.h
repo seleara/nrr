@@ -29,7 +29,7 @@ enum class Pivot {
 	BottomRight
 };
 
-struct Sprite : public Component<Sprite> {
+struct Sprite {
 	Texture texture;
 	Anchor anchor;
 	Pivot pivot;
@@ -64,4 +64,8 @@ struct Sprite : public Component<Sprite> {
 	const glm::vec4 rect() const {
 		return glm::vec4(0, 0, texture.size().x, texture.size().y);
 	}
+};
+
+struct SpriteComponent : public Component<Sprite>, public Sprite {
+
 };

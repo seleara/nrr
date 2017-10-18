@@ -34,7 +34,7 @@ public:
 	}
 
 	void allocate(size_t size) {
-		data_.resize(size * sizeof(T));
+		data_.resize(size);
 	}
 
 	void copy(T *source, size_t sourceOffset, size_t size, size_t destOffset) {
@@ -129,7 +129,7 @@ public:
 			break;
 		}
 		indexBuffer.bind();
-		glDrawElements(glType, static_cast<GLsizei>(count), GL_UNSIGNED_INT, (void *)start);
+		glDrawElements(glType, static_cast<GLsizei>(count), GL_UNSIGNED_INT, (void *)(start * sizeof(T)));
 	}
 private:
 	VertexBufferType type_ = VertexBufferType::Array;

@@ -15,7 +15,7 @@ public:
 	virtual ~System() {}
 protected:
 	template <typename ... Args>
-	void forEach(std::function<void(Args...)> func) {
+	void forEach(std::function<void(Args & ...)> func) {
 		std::set<EntityID> finalSet = allWith<Args...>();
 		for (auto id : finalSet) {
 			buildFunction<Args...>(func, id);
@@ -23,13 +23,13 @@ protected:
 	}
 
 	template <typename C>
-	void buildFunction(std::function<void(C)> func, EntityID id) {
+	void buildFunction(std::function<void(C &)> func, EntityID id) {
 		func(manager_->get<C>(id).get());
 	}
 
 	template <typename C, typename C2, typename ... Args>
-	void buildFunction(std::function<void(C, C2, Args...)> func, EntityID id) {
-		std::function<void(C2, Args...)> g = [&](C2 &&c2, Args && ... args) { return std::move(func)(std::move(manager_->get<C>(id).get()), std::forward<C2>(c2), std::forward<Args>(args)...); };
+	void buildFunction(std::function<void(C &, C2 &, Args & ...)> func, EntityID id) {
+		std::function<void(C2 &, Args & ...)> g = [&](C2 &c2, Args & ... args) { return std::move(func)(std::move(manager_->get<C>(id).get()), std::forward<C2>(c2), std::forward<Args>(args)...); };
 		buildFunction<Args...>(g, id);
 	}
 
@@ -38,11 +38,17 @@ protected:
 		return ids;
 	}
 
-	template <typename C, typename ... Args>
+	template <typename C>
+	std::set<EntityID> allWith() {
+		std::set<EntityID> ids = manager_->allWith<C>();
+		return ids;
+	}
+
+	template <typename C, typename C2, typename ... Args>
 	std::set<EntityID> allWith() {
 		std::set<EntityID> ids = manager_->allWith<C>();
 		//std::cout << "Start = " << ids.size() << "\n";
-		allWith_<Args...>(ids);
+		allWith_<C2, Args...>(ids);
 		return ids;
 	}
 

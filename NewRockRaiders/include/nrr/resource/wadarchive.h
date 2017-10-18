@@ -16,6 +16,7 @@ struct ArchiveEntry {
 class WadArchive {
 public:
 	void append(const std::string &path);
+	bool exists(const std::string &path) const;
 	const ArchiveEntry &get(const std::string &path) const;
 	std::istream &getStream(const ArchiveEntry &entry);
 private:

@@ -65,6 +65,12 @@ public:
 		}
 	}
 
+	void render2d() {
+		for (auto *s : systems_) {
+			s->render2d();
+		}
+	}
+
 	template <typename C, typename ... Args>
 	ComponentWrapper<C> add(EntityID id, Args && ... args) {
 		componentsToEntities_[C::id()].insert(id);
