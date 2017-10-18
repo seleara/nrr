@@ -138,6 +138,7 @@
     <ClCompile Include="src\math\time.cc" />
     <ClCompile Include="src\math\uniformbuffer.cc" />
     <ClCompile Include="src\model\formats\lightwave.cc" />
+    <ClCompile Include="src\model\formats\lightwavemesh.cc" />
     <ClCompile Include="src\model\model.cc" />
     <ClCompile Include="src\resource\texture\texture.cc" />
     <ClCompile Include="src\resource\wadarchive.cc" />
@@ -153,6 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\nrr\debug\archiveviewer.h" />
+    <ClInclude Include="include\nrr\debug\ecsviewer.h" />
     <ClInclude Include="include\nrr\debug\glviewer.h" />
     <ClInclude Include="include\nrr\ecs\common\basepool.h" />
     <ClInclude Include="include\nrr\ecs\common\defines.h" />
@@ -168,6 +170,7 @@
     <ClInclude Include="include\nrr\math\transform.h" />
     <ClInclude Include="include\nrr\math\uniformbuffer.h" />
     <ClInclude Include="include\nrr\math\vertexbuffer.h" />
+    <ClInclude Include="include\nrr\model\modelrenderingsystem.h" />
     <ClInclude Include="include\nrr\sprite\sprite.h" />
     <ClInclude Include="include\nrr\sprite\spriterenderingsystem.h" />
     <ClInclude Include="include\nrr\ecs\systems\system.h" />

@@ -73,6 +73,11 @@ public:
 
 	template <typename C, typename ... Args>
 	ComponentWrapper<C> add(EntityID id, Args && ... args) {
+		// Debug
+		if (componentNames_.find(C::id()) == componentNames_.end()) {
+			componentNames_[C::id()] = typeid(C).name();
+		}
+
 		componentsToEntities_[C::id()].insert(id);
 		Pool<C> *pool;
 		auto iter = componentPools_.find(C::id());
@@ -113,9 +118,11 @@ public:
 	}
 private:
 	friend class Entity;
+	friend class ECSViewer;
 
 	size_t entityCounter_ = 0;
 
+	std::map<ComponentID, std::string> componentNames_;
 	std::vector<BaseSystem *> systems_;
 	std::map<ComponentID, BasePool *> componentPools_;
 	std::map<ComponentID, std::set<EntityID>> componentsToEntities_;

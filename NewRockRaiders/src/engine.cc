@@ -3,12 +3,14 @@
 #include <nrr/resource/wadarchive.h>
 #include <nrr/debug/archiveviewer.h>
 #include <nrr/debug/glviewer.h>
+#include <nrr/debug/ecsviewer.h>
 
 #include <nrr/ecs/ecs.h>
 #include <nrr/math/transform.h>
 #include <nrr/math/uniformbuffer.h>
 #include <nrr/sprite/sprite.h>
 #include <nrr/sprite/spriterenderingsystem.h>
+#include <nrr/model/modelrenderingsystem.h>
 #include <nrr/math/camera.h>
 #include <nrr/math/camerasystem.h>
 #include <nrr/math/clock.h>
@@ -55,7 +57,10 @@ int Engine::run() {
 
 	EntityManager em;
 
+	ECSViewer ecsViewer(em);
+
 	em.registerSystem<SpriteRenderingSystem>();
+	em.registerSystem<ModelRenderingSystem>();
 	em.registerSystem<CameraSystem>();
 
 	auto test = em.create();
@@ -64,7 +69,7 @@ int Engine::run() {
 
 	auto camera = em.create();
 	camera.add<TransformComponent>()->position = glm::vec3(-8, 16, 16);
-	auto &cameraComponent = camera.add<CameraComponent>();
+	auto cameraComponent = camera.add<CameraComponent>();
 	CameraComponent::main = cameraComponent.ptr();
 	cameraComponent->mode = CameraMode::Target;
 	cameraComponent->target = glm::vec3(0, 0, 0);
@@ -77,10 +82,25 @@ int Engine::run() {
 	std::cout << "Lego*/Main/FPLightRGB = " << col.x << ", " << col.y << ", " << col.z << std::endl;
 	std::cout << "Lego*/Main/FPLightRGB = " << col2.x << ", " << col2.y << ", " << col2.z << std::endl;
 
-	Model model;
+	auto raider1 = em.create();
+	auto raider2 = em.create();
+	raider1.add<TransformComponent>()->position = glm::vec3(4, 0, 0);
+	raider2.add<TransformComponent>()->position = glm::vec3(-4, 0, 0);
+	auto model = raider1.add<ModelComponent>();
+	auto model2 = raider2.add<ModelComponent>();
 	//model.load(archive, "buildings/barracks/barracks.ae");
 	//model.load(archive, "buildings/powerstation/powerstation.ae");
-	model.load(archive, "mini-figures/pilot/pilot.ae");
+	model->load(archive, "mini-figures/pilot/pilot.ae");
+	model->play("Activity_Drill");
+	model2->load(archive, "mini-figures/pilot/pilot.ae");
+	model2->play("Activity_Eat");
+
+	auto barracks = em.create();
+	barracks.add<TransformComponent>()->position = glm::vec3(-20, 0, 0);
+	auto barracksModel = barracks.add<ModelComponent>();
+	//barracksModel->load(archive, "buildings/barracks/barracks.ae");
+	barracksModel->load(archive, "vehicles/smalldigger/smalldigger.ae");
+	barracksModel->play("Activity_Stand");
 
 	Texture whiteTexture;
 	std::vector<unsigned char> whitePixel = { 0xff, 0xff, 0xff, 0xff };
@@ -110,53 +130,17 @@ int Engine::run() {
 		while (accumulator >= Time::fixedDeltaTime_) {
 			accumulator -= Time::fixedDeltaTime_;
 			em.fixedUpdate();
-			model.fixedUpdate();
 		}
-
 		em.update();
 
 		window_.clear(glm::vec4(0.5f, 0.5f, 0.5f, 1.0f));
-
 		em.render();
-		model.render();
-
 		em.render2d();
 
 		ImGui_ImplGlfwGL3_NewFrame();
-
-		/*const char *items[] = { "1 - Driller Night!", "2 - ???" };
-		static int currentItem = 0;
-
-
-		static int selected = 0;
-		ImGui::BeginChild("left pane", ImVec2(150, 0), true);
-			for (int i = 0; i < 30; i++) {
-				std::stringstream label;
-				label << "Level " << i;
-				if (ImGui::Selectable(label.str().c_str(), selected == i)) {
-					selected = i;
-				}
-			}
-		ImGui::EndChild();
-		ImGui::SameLine();
-
-		// right
-		ImGui::BeginGroup();
-			ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing())); // Leave room for 1 line below us
-				ImGui::Text("Level %d", selected);
-				ImGui::Separator();
-				ImGui::TextWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ");
-			ImGui::EndChild();
-			ImGui::BeginChild("buttons");
-				if (ImGui::Button("Load")) {}
-				//ImGui::SameLine();
-				//if (ImGui::Button("Save")) {}
-			ImGui::EndChild();
-		ImGui::EndGroup();*/
-
 		archiveViewer.draw();
 		glViewer.draw();
-
+		ecsViewer.draw();
 		ImGui::Render();
 
 		window_.swapBuffers();

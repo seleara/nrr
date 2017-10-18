@@ -95,6 +95,9 @@
     <ClCompile Include="src\math\clock.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\model\formats\lightwavemesh.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\nrr\ecs\entities\entity.h">
@@ -224,6 +227,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\nrr\math\time.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\model\modelrenderingsystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\debug\ecsviewer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

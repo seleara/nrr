@@ -4,6 +4,7 @@
 
 #include <nrr/resource/texture/texture.h>
 #include <nrr/resource/shader/shader.h>
+#include <nrr/model/model.h>
 
 class OpenGLViewer {
 public:
@@ -21,6 +22,7 @@ public:
 				if (ImGui::Selectable(kv.first.c_str(), selectedTexture_ == kv.second)) {
 					selectedTexture_ = kv.second;
 					selectedShader_ = nullptr;
+					selectedModel_ = nullptr;
 					//previewTexture();
 				}
 			}
@@ -35,6 +37,22 @@ public:
 				if (ImGui::Selectable(kv.first.c_str(), selectedShader_ == kv.second)) {
 					selectedShader_ = kv.second;
 					selectedTexture_ = nullptr;
+					selectedModel_ = nullptr;
+					//previewTexture();
+				}
+			}
+			ImGui::TreePop();
+		}
+		
+		bool modelNodeOpen = ImGui::TreeNode("Models");
+		if (modelNodeOpen) {
+			ImGui::NextColumn();
+
+			for (const auto &kv : LightwaveModelLoader::resources_) {
+				if (ImGui::Selectable(kv.first.c_str(), selectedModel_ == kv.second)) {
+					selectedModel_ = kv.second;
+					selectedTexture_ = nullptr;
+					selectedShader_ = nullptr;
 					//previewTexture();
 				}
 			}
@@ -66,6 +84,28 @@ public:
 			ImGui::BeginChild("preview", ImVec2(0, 0), false);
 			ImGui::TextWrapped(selectedShader_->source_.c_str());
 			ImGui::EndChild();
+		} else if (selectedModel_) {
+			auto ae = (AnimatedEntityResource *)selectedModel_.get();
+			ImGui::Text(ae->name().c_str());
+			ImGui::Text("Meshes: %d, Animations: %d", ae->meshes_.size(), ae->animations_.size());
+			ImGui::Separator();
+			//ImGui::PushID(1236);
+			if (ImGui::TreeNode("Meshes")) {
+				ImGui::NextColumn();
+				for (auto &kv : ae->meshes_) {
+					ImGui::Text(kv.second->name().c_str());
+				}
+				ImGui::TreePop();
+			}
+			if (ImGui::TreeNode("Animations")) {
+				ImGui::NextColumn();
+				for (auto &kv : ae->animations_) {
+					auto str = kv.first + ": " + kv.second->name();
+					ImGui::Text(str.c_str());
+				}
+				ImGui::TreePop();
+			}
+			//ImGui::PopID();
 		}
 		ImGui::EndChild();
 		ImGui::End();
@@ -73,5 +113,6 @@ public:
 private:
 	std::shared_ptr<TextureResource> selectedTexture_;
 	std::shared_ptr<ShaderResource> selectedShader_;
+	std::shared_ptr<ModelResource> selectedModel_;
 	//const char *filterNames_[] = { "Nearest", "Linear" };
 };

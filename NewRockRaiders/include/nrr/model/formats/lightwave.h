@@ -4,6 +4,7 @@
 
 #include <nrr/model/model.h>
 #include <nrr/resource/texture/texture.h>
+#include <nrr/util/configparser.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -18,12 +19,14 @@ enum class LightwaveTextureAnimation {
 };
 
 struct LightwaveTexture {
-	LightwaveTextureType type;
-	LightwaveTextureAnimation animation;
-	Texture texture;
-	uint16_t flag;
+	LightwaveTextureType type = LightwaveTextureType::Planar;
+	LightwaveTextureAnimation animation = LightwaveTextureAnimation::None;
+	std::vector<Texture> textures;
+	uint16_t flag = 0;
 	glm::vec3 size;
 	glm::vec3 center;
+	double sequenceTime = 250;
+	int sequenceFrame = 0; // Used if the texture is a sequence
 };
 
 struct LightwaveSurface {
@@ -42,14 +45,29 @@ struct Vertex {
 	glm::vec2 uv;
 };
 
+class BinaryReader;
+
 class LightwaveMesh : public ModelMesh {
 public:
 	LightwaveMesh(ModelResource *model) : ModelMesh(model) {}
 	void load(WadArchive &archive, const std::string &path) override;
+	void fixedUpdate() override;
 	void render() override;
+	void render(int sequenceFrame);
+	const std::string &name() const override;
 private:
+	void loadExternalUV(WadArchive &archive, const std::string &path, const std::string &uvPath);
+	void generateTexcoords();
+
+	// LWO read methods
+	void readPoints(int chunkSize, BinaryReader &br);
+	void readSurfaceNames(int chunkSize, BinaryReader &br);
+	void readPolygons(int chunkSize, BinaryReader &br);
+	void readSurface(int chunkSize, BinaryReader &br, WadArchive &archive, const std::string &path);
+
 	friend class ModelResource;
 	friend class AnimatedEntityResource;
+	friend class ModelRenderingSystem;
 	std::vector<Vertex> points;
 	std::vector<std::string> surfNames;
 	std::vector<glm::ivec3> faces;
@@ -57,6 +75,9 @@ private:
 	std::vector<int> faceSurfIndex;
 	//std::vector<int> faceSurfs;
 	std::vector<LightwaveSurface> surfs;
+	int maxSequenceFrames_ = 1;
+
+	std::string name_;
 };
 
 struct LightwaveKeyframe {
@@ -85,24 +106,35 @@ public:
 	void load(WadArchive &archive, const std::string &path) override;
 	void fixedUpdate() override;
 	void render() override;
+	const std::string &name() const override;
 private:
+	std::string name_;
 	double fps_ = 0;
 	int firstFrame_ = 0;
 	int lastFrame_ = 0;
-	int currentFrame_ = 0;
-	double time_ = 0;
 	glm::mat4 calculateMatrix(ObjectInfo &obj, int frame);
 	LightwaveKeyframe interpolateFrames(const LightwaveKeyframe &kf1, const LightwaveKeyframe &kf2, int frame) const;
 	std::vector<ObjectInfo> objects_;
+
+	friend class AnimationWrapper;
+	friend class ModelRenderingSystem;
 };
 
 class AnimatedEntityResource : public ModelResource {
 public:
 	void load(WadArchive &archive, const std::string &path) override;
+
+	ModelAnimation *loadAnimation(const std::string &animationName) override;
+	const std::string &name() const override;
 private:
+	WadArchive *archive_;
+	ConfigParser ae_;
+	std::string name_;
+	std::string folder_;
+
+	friend class OpenGLViewer;
 	friend class LightwaveMesh;
 	friend class LightwaveAnimation;
 };
 
 typedef ResourceLoader<ModelResource, AnimatedEntityResource> LightwaveModelLoader;
-typedef ModelWrapper Model;
