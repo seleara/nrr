@@ -4,8 +4,8 @@
 
 #include <nrr/math/vertexbuffer.h>
 
-class Sprite;
-class Transform;
+struct Sprite;
+struct Transform;
 class TextureResource;
 
 class SpriteBatch {

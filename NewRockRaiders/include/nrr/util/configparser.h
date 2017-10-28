@@ -83,17 +83,38 @@ public:
 	template <>
 	glm::ivec3 get<glm::ivec3>(const std::string &path) const {
 		const auto &value = getValue(path);
-		auto tokens = StringUtil::split(value.value, { ':' });
+		auto tokens = StringUtil::splitRef(value.value, { ':' });
 		glm::ivec3 ret;
 		std::stringstream ss;
 		ss << tokens[0] << ' ' << tokens[1] << ' ' << tokens[2];
 		ss >> ret.x >> ret.y >> ret.z;
 		return ret;
 	}
+
+	template <>
+	float get<float>(const std::string &path) const {
+		const auto &value = getValue(path);
+		std::stringstream ss;
+		float ret;
+		ss << value.value;
+		ss >> ret;
+		return ret;
+	}
+
+	template <>
+	float get<float, false>(const std::string &path) const {
+		const auto &value = getValue(path);
+		std::stringstream ss;
+		float ret;
+		ss << value.value;
+		ss >> ret;
+		ret /= 255.0f;
+		return ret;
+	}
 private:
 	glm::vec3 getVec3(const std::string &path) const {
 		const auto &value = getValue(path);
-		auto tokens = StringUtil::split(value.value, { ':' });
+		auto tokens = StringUtil::splitRef(value.value, { ':' });
 		glm::vec3 ret;
 		std::stringstream ss;
 		ss << tokens[0] << ' ' << tokens[1] << ' ' << tokens[2];
@@ -103,6 +124,14 @@ private:
 
 	const ConfigValue &getValue(const std::string &path) const {
 		std::string remaining = path;
+
+		// The paths used internally by the original rockraiders use "::" to separate blocks, so we need to replace all
+		// occurrences of "::" with "/".
+		auto doubleColon = remaining.find("::");
+		while (doubleColon != std::string::npos) {
+			remaining.replace(doubleColon, 2, "/");
+			doubleColon = remaining.find("::");
+		}
 		ConfigNode *current = root_.get();
 		while (remaining.size() > 0) {
 			auto slashPos = remaining.find('/');

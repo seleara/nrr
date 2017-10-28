@@ -18,7 +18,8 @@ protected:
 	void forEach(std::function<void(Args & ...)> func) {
 		std::set<EntityID> finalSet = allWith<Args...>();
 		for (auto id : finalSet) {
-			buildFunction<Args...>(func, id);
+			//buildFunction<Args...>(func, id);
+			func(*(manager_->getPointer<Args>(id))...);
 		}
 	}
 

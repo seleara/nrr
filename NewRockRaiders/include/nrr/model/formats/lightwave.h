@@ -1,10 +1,12 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include <nrr/model/model.h>
 #include <nrr/resource/texture/texture.h>
 #include <nrr/util/configparser.h>
+#include <nrr/resource/shader/shader.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -49,11 +51,12 @@ class BinaryReader;
 
 class LightwaveMesh : public ModelMesh {
 public:
-	LightwaveMesh(ModelResource *model) : ModelMesh(model) {}
+	//LightwaveMesh(ModelResource *model) : ModelMesh(model) {}
 	void load(WadArchive &archive, const std::string &path) override;
 	void fixedUpdate() override;
 	void render() override;
 	void render(int sequenceFrame);
+	void render(int sequenceFrame, Shader &shader, Texture &whiteTexture);
 	const std::string &name() const override;
 private:
 	void loadExternalUV(WadArchive &archive, const std::string &path, const std::string &uvPath);
@@ -65,12 +68,14 @@ private:
 	void readPolygons(int chunkSize, BinaryReader &br);
 	void readSurface(int chunkSize, BinaryReader &br, WadArchive &archive, const std::string &path);
 
+	std::vector<glm::ivec3> polygonToTriangles(const std::vector<int> &polygon) const;
+
 	friend class ModelResource;
 	friend class AnimatedEntityResource;
 	friend class ModelRenderingSystem;
 	std::vector<Vertex> points;
 	std::vector<std::string> surfNames;
-	std::vector<glm::ivec3> faces;
+	std::vector<std::vector<int>> faces;
 	std::vector<std::vector<glm::ivec3>> polygons;
 	std::vector<int> faceSurfIndex;
 	//std::vector<int> faceSurfs;
@@ -102,7 +107,7 @@ struct ObjectInfo {
 
 class LightwaveAnimation : public ModelAnimation {
 public:
-	LightwaveAnimation(ModelResource *model) : ModelAnimation(model) {}
+	//LightwaveAnimation(ModelResource *model) : ModelAnimation(model) {}
 	void load(WadArchive &archive, const std::string &path) override;
 	void fixedUpdate() override;
 	void render() override;
@@ -132,9 +137,18 @@ private:
 	std::string name_;
 	std::string folder_;
 
+	std::string wheelNull, fireNull, drillNull, depositNull;
+
 	friend class OpenGLViewer;
 	friend class LightwaveMesh;
 	friend class LightwaveAnimation;
 };
 
+class AnimatedRaiderResource : public AnimatedEntityResource {
+public:
+	void load(WadArchive &archive, const std::string &path) override;
+};
+
 typedef ResourceLoader<ModelResource, AnimatedEntityResource> LightwaveModelLoader;
+typedef ResourceLoader<ModelAnimation, LightwaveAnimation> LightwaveAnimationLoader;
+typedef ResourceLoader<ModelMesh, LightwaveMesh> LightwaveMeshLoader;

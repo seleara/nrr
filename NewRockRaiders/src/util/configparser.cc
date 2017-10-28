@@ -58,14 +58,14 @@ void ConfigParser::parse(WadArchive &archive, const std::string &path) {
 		}
 
 		if (line != "") {
-			auto tokens = StringUtil::split(line);
+			auto tokens = StringUtil::splitRef(line);
 			if (tokens.size() == 2) {
 				auto value = std::make_unique<ConfigValue>();
 				value->id = tokens[0];
 				value->value = tokens[1];
 				value->parent = current;
 				value->type = ConfigNodeType::Value;
-				current->children.insert({ tokens[0], std::move(value) });
+				current->children.insert({ value->id, std::move(value) });
 
 #ifdef NRR_CONFIGPARSER_DEBUG
 				for (int i = 0; i < indent; ++i)

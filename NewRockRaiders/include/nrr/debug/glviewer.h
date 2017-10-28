@@ -23,6 +23,8 @@ public:
 					selectedTexture_ = kv.second;
 					selectedShader_ = nullptr;
 					selectedModel_ = nullptr;
+
+					textureInfo_.references = kv.second.use_count() - 2; // Minus two for the copy in the cache and the copy used here
 					//previewTexture();
 				}
 			}
@@ -53,6 +55,8 @@ public:
 					selectedModel_ = kv.second;
 					selectedTexture_ = nullptr;
 					selectedShader_ = nullptr;
+
+					modelInfo_.references = kv.second.use_count() - 2; // Minus two for the copy in the cache and the copy used here
 					//previewTexture();
 				}
 			}
@@ -69,6 +73,7 @@ public:
 			//ImGui::Separator();
 			ImGui::Text("Size: %dx%d", selectedTexture_->size().x, selectedTexture_->size().y);
 			ImGui::Text("Mag/Min: %s/%s", "Nearest", "Nearest");
+			ImGui::Text("Referenced by %d objects.", textureInfo_.references);
 			ImGui::Separator();
 			ImGui::BeginChild("preview", ImVec2(0, 0), false);
 			//ImGui::TextWrapped(filePreview_.c_str());
@@ -88,6 +93,7 @@ public:
 			auto ae = (AnimatedEntityResource *)selectedModel_.get();
 			ImGui::Text(ae->name().c_str());
 			ImGui::Text("Meshes: %d, Animations: %d", ae->meshes_.size(), ae->animations_.size());
+			ImGui::Text("Referenced by %d objects.", modelInfo_.references);
 			ImGui::Separator();
 			//ImGui::PushID(1236);
 			if (ImGui::TreeNode("Meshes")) {
@@ -114,5 +120,11 @@ private:
 	std::shared_ptr<TextureResource> selectedTexture_;
 	std::shared_ptr<ShaderResource> selectedShader_;
 	std::shared_ptr<ModelResource> selectedModel_;
+	struct DebugTextureInfo {
+		int references;
+	} textureInfo_;
+	struct DebugModelInfo {
+		int references;
+	} modelInfo_;
 	//const char *filterNames_[] = { "Nearest", "Linear" };
 };

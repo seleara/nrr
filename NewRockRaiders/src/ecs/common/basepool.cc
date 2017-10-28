@@ -18,11 +18,11 @@ void BasePool::allocate(size_t count) {
 }
 
 void *BasePool::get(int n) {
-	if (n < 0 || n > blockCount_) return nullptr;
+	if (n < 0 || n > blockCount_ * objectsPerBlock_) return nullptr;
 	return blocks_[n / objectsPerBlock_] + (n % objectsPerBlock_) * objectSize_;
 }
 
 const void *BasePool::get(int n) const {
-	if (n < 0 || n > blockCount_) return nullptr;
+	if (n < 0 || n > blockCount_ * objectsPerBlock_) return nullptr;
 	return blocks_[n / objectsPerBlock_] + (n % objectsPerBlock_) * objectSize_;
 }

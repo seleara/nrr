@@ -6,6 +6,7 @@
 #include <nrr/util/string.h>
 #include <nrr/math/time.h>
 #include <nrr/resource/shader/shader.h>
+#include <nrr/resource/texture/texture.h>
 
 void LightwaveMesh::load(WadArchive &archive, const std::string &path) {
 	const auto &entry = archive.get(path);
@@ -50,11 +51,14 @@ void LightwaveMesh::load(WadArchive &archive, const std::string &path) {
 		generateTexcoords();
 	}
 
-	// Sort faces by surface
+	// Split faces into triangles and sort them by surface
 	polygons.resize(surfs.size() + 1);
 	for (int i = 0; i < faces.size(); ++i) {
 		auto surfIndex = faceSurfIndex[i];
-		polygons[surfIndex].push_back(faces[i]);
+		auto tris = polygonToTriangles(faces[i]);
+		for (const auto &tri : tris) {
+			polygons[surfIndex].push_back(tri);
+		}
 	}
 
 	// Create buffers with the vertex and index data, making it available to the GPU
@@ -121,16 +125,22 @@ void LightwaveMesh::readPolygons(int chunkSize, BinaryReader &br) {
 	uint32_t read = 0;
 	while (read < chunkSize) {
 		auto numVerts = br.readBE<uint16_t>();
-		if (numVerts == 3) {
+		std::vector<int> face;
+		face.reserve(numVerts);
+		for (int i = 0; i < numVerts; ++i) {
+			face.push_back(br.readBE<uint16_t>());
+		}
+		auto surf = br.readBE<int16_t>();
+		if (surf < 0) throw std::runtime_error("Detail polygons not supported.");
+		faces.push_back(face);
+		faceSurfIndex.push_back(surf);
+		/*if (numVerts == 3) {
 			glm::ivec3 face;
 			for (int i = 0; i < numVerts; ++i) {
 				face[i] = br.readBE<uint16_t>();
 			}
 			auto surf = br.readBE<int16_t>();
 			if (surf < 0) throw std::runtime_error("Detail polygons not supported.");
-			/*if (faces.size() < surf + 1) {
-			faces.resize(surf + 1);
-			}*/
 			faces.push_back(face);
 			faceSurfIndex.push_back(surf);
 		} else if (numVerts == 4) {
@@ -147,16 +157,13 @@ void LightwaveMesh::readPolygons(int chunkSize, BinaryReader &br) {
 			face2.z = face.w;
 			auto surf = br.readBE<int16_t>();
 			if (surf < 0) throw std::runtime_error("Detail polygons not supported.");
-			/*if (faces.size() < surf + 1) {
-			faces.resize(surf + 1);
-			}*/
 			faces.push_back(face1);
 			faces.push_back(face2);
 			faceSurfIndex.push_back(surf);
 			faceSurfIndex.push_back(surf);
 		} else {
 			throw std::runtime_error("Only tris and quads supported at the moment.");
-		}
+		}*/
 		read += numVerts * 2 + 4;
 	}
 }
@@ -211,8 +218,8 @@ void LightwaveMesh::readSurface(int chunkSize, BinaryReader &br, WadArchive &arc
 			auto timgStr = br.readString();
 			if (timgStr.size() % 2 == 0) br.skip(1);
 			timgStr = StringUtil::baseName(timgStr);
-			auto tokens = StringUtil::split(timgStr);
-			auto &timg = tokens[0];
+			auto tokens = StringUtil::splitRef(timgStr);
+			auto timg = tokens[0];
 			if (tokens.size() > 1) {
 				if (tokens[1] == "(sequence)") {
 					surf.ctex.animation = LightwaveTextureAnimation::Sequence;
@@ -222,13 +229,15 @@ void LightwaveMesh::readSurface(int chunkSize, BinaryReader &br, WadArchive &arc
 			auto pos = br.tellg();
 			//std::cout << "Texture Path = " << (folder + timg) << "\n";
 			std::string sharedFolder = "world/shared/";
+			std::string folderPath(folder + timg);
+			std::string sharedFolderPath(sharedFolder + timg);
 			auto &texture = surf.ctex.textures.emplace_back();
 			std::string *foundFolder;
-			if (archive.exists(folder + timg)) {
-				texture.load(archive, folder + timg);
+			if (archive.exists(folderPath)) {
+				texture.load(archive, folderPath);
 				foundFolder = &folder;
-			} else if (archive.exists(sharedFolder + timg)) {
-				texture.load(archive, sharedFolder + timg);
+			} else if (archive.exists(sharedFolderPath)) {
+				texture.load(archive, sharedFolderPath);
 				foundFolder = &sharedFolder;
 			} else {
 				// Not found
@@ -283,6 +292,23 @@ void LightwaveMesh::readSurface(int chunkSize, BinaryReader &br, WadArchive &arc
 	surfs.push_back(surf);
 }
 
+std::vector<glm::ivec3> LightwaveMesh::polygonToTriangles(const std::vector<int> &polygon) const {
+	std::vector<glm::ivec3> tris;
+	tris.reserve(polygon.size() - 2);
+	if (polygon.size() == 3) {
+		tris.push_back(glm::ivec3(polygon[0], polygon[1], polygon[2]));
+	} else if (polygon.size() == 4) { // Technically could be concave but assume it's not for now I guess
+		tris.push_back(glm::ivec3(polygon[0], polygon[1], polygon[2]));
+		tris.push_back(glm::ivec3(polygon[0], polygon[2], polygon[3]));
+	} else if (polygon.size() > 4) {
+		std::cerr << "Warning: Polygon might be concave, in which case this algorithm will fail.\n";
+		for (int i = 0; i < polygons.size() - 2; ++i) {
+			tris.push_back(glm::ivec3(polygon[0], polygon[i + 1], polygon[i + 2]));
+		}
+	}
+	return tris;
+}
+
 void LightwaveMesh::loadExternalUV(WadArchive &archive, const std::string &path, const std::string &uvPath) {
 	const auto &entry = archive.get(uvPath);
 	auto &uvStream = archive.getStream(entry);
@@ -331,9 +357,9 @@ void LightwaveMesh::loadExternalUV(WadArchive &archive, const std::string &path,
 	for (int i = 0; i < polys; ++i) {
 		int polyIndex, vertices;
 		uvStream >> polyIndex >> vertices;
-		if (vertices != 3) {
+		/*if (vertices != 3) {
 			throw std::runtime_error("Need to delay quad->tri step.");
-		}
+		}*/
 		for (int j = 0; j < vertices; ++j) {
 			float u, v, w;
 			uvStream >> u >> v >> w;
@@ -345,11 +371,11 @@ void LightwaveMesh::loadExternalUV(WadArchive &archive, const std::string &path,
 void LightwaveMesh::generateTexcoords() {
 	// Generate texcoords
 	for (int i = 0; i < faces.size(); ++i) {
-		const auto &tri = faces[i];
+		const auto &pol = faces[i];
 		const auto &surf = surfs[faceSurfIndex[i] - 1];
 		const auto &ctr = surf.ctex.center;
-		for (int j = 0; j < 3; ++j) {
-			auto &v = points[tri[j]];
+		for (int j = 0; j < pol.size(); ++j) {
+			auto &v = points[pol[j]];
 			switch (surf.ctex.flag & 0x7) {
 			case 1: // X Axis
 				v.uv.s = (v.point.z - ctr.z) / surf.ctex.size.z + 0.5f;
@@ -387,64 +413,153 @@ void LightwaveMesh::fixedUpdate() {
 }
 
 void LightwaveMesh::render() {
-	render(0);
+	//render(0);
 }
 
 void LightwaveMesh::render(int sequenceFrame) {
-	Shader shader;
-	shader.load("data/shaders/model.glsl");
-	shader.bind();
+}
 
-	glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
-	glUniform4fv(shader.uniformLocation("color"), 1, &white[0]);
+void LightwaveMesh::render(int sequenceFrame, Shader &shader, Texture &whiteTexture) {
+	// Ugly hack to avoid constructing these string every time this function is called
+	static const std::string modelShaderName = "model";
+	static const std::string whiteTextureName = "white";
+	static const std::string colorLocationName = "color";
+	static const std::string pixelBlendingLocationName = "pixelBlending";
+	static const std::string pixelBlendingColorLocationName = "pixelBlendingColor";
+	// Ugly hack end
 
-	Texture whiteTexture;
-	whiteTexture.loadCache("white");
+	//Shader shader;
+	//shader.loadCache(modelShaderName);
+	//shader.bind();
+
+	//Texture whiteTexture;
+	//whiteTexture.loadCache(whiteTextureName);
 
 	glBindVertexArray(vao_);
 	int start = 0;
-	bool invalid = false;
-	for (int i = 0; i < polygons.size(); ++i) {
+	bool invalid = false, blending = false;
+
+	static const unsigned int colorLocation = 0; //shader.uniformLocation(colorLocationName);
+	static const unsigned int pixelBlendingLocation = 1; //shader.uniformLocation(pixelBlendingLocationName);
+	static const unsigned int pixelBlendingColorLocation = 2; //shader.uniformLocation(pixelBlendingColorLocationName);
+
+	glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
+	//glUniform4fv(colorLocation, 1, &white[0]);
+	struct RenderSettings {
+		TextureResource *texture = nullptr;
+		bool pixelBlending = false;
+		bool invalid = false;
+		glm::vec4 color;
+		bool operator==(const RenderSettings &other) {
+			return other.texture == texture && other.pixelBlending == pixelBlending && other.invalid == invalid && other.color == color;
+		}
+	} renderSettings, lastRenderSettings;
+
+	int renderCount = 0;
+
+	for (int i = 1; i < polygons.size(); ++i) {
 		if (polygons[i].size() == 0) continue;
 		if (i != 0) {
 			auto &surf = surfs[i - 1];
 			//glUniform4fv(shader.uniformLocation("color"), 1, &surfs[i - 1].color[0]);
 			if (surf.ctex.textures.size() != 0) {
-				Texture *texture = nullptr;
 				if (surf.ctex.animation == LightwaveTextureAnimation::None) {
 					if (surf.ctex.textures[0].valid()) {
-						texture = &surf.ctex.textures[0];
+						renderSettings.texture = surf.ctex.textures[0].get();
+						renderSettings.invalid = false;
+						/*if (invalid) {
+							glUniform4fv(colorLocation, 1, &white[0]);
+							invalid = false;
+						}*/
 					} else {
-						texture = &whiteTexture;
-						glUniform4fv(shader.uniformLocation("color"), 1, &surf.color[0]);
-						invalid = true;
+						renderSettings.texture = whiteTexture.get();
+						renderSettings.invalid = true;
+						renderSettings.color = surf.color;
+						/*if (!invalid) {
+							glUniform4fv(colorLocation, 1, &surf.color[0]);
+							invalid = true;
+						}*/
 					}
 				} else if (surf.ctex.animation == LightwaveTextureAnimation::Sequence) {
 					// Temporary frame hack
-					texture = &surf.ctex.textures[sequenceFrame % surf.ctex.textures.size()];
+					//texture = &surf.ctex.textures[sequenceFrame % surf.ctex.textures.size()];
+					renderSettings.texture = surf.ctex.textures[sequenceFrame % surf.ctex.textures.size()].get();
 				}
-				texture->bind();
 				if (surf.ctex.flag & 32 && !invalid) {
-					glUniform1i(shader.uniformLocation("pixelBlending"), true);
+					renderSettings.pixelBlending = true;
+					/*if (!blending) {
+						glUniform1i(pixelBlendingLocation, true);
+						blending = true;
+					}
 					auto colorKey = texture->pixel(0, texture->size().y - 1);
-					glUniform4fv(shader.uniformLocation("pixelBlendingColor"), 1, &colorKey[0]);
+					glUniform4fv(pixelBlendingColorLocation, 1, &colorKey[0]);*/
 					//std::cout << "pixel blending on surf \"" << surfs[i - 1].name << "\".\n";
 					//glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
 				} else {
-					glUniform1i(shader.uniformLocation("pixelBlending"), false);
+					renderSettings.pixelBlending = false;
+					/*_if (blending) {
+						glUniform1i(pixelBlendingLocation, false);
+						blending = false;
+					}*/
 					//std::cout << "NO pixel blending on surf \"" << surfs[i - 1].name << "\".\n";
 					//glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 				}
+			} else {
+				renderSettings.texture = whiteTexture.get();
+				renderSettings.invalid = true;
+				renderSettings.color = surf.color;
 			}
 		}
-		buffer_.draw(Primitives::Triangles, start, polygons[i].size() * 3, indexBuffer_);
-		start += polygons[i].size() * 3;
-		if (invalid) {
-			glUniform4fv(shader.uniformLocation("color"), 1, &white[0]);
-			invalid = false;
+		renderCount += polygons[i].size() * 3;
+		if (renderSettings == lastRenderSettings || i < 2) {
+			lastRenderSettings = renderSettings;
+			continue;
 		}
+		lastRenderSettings.texture->bind();
+		if (!lastRenderSettings.invalid) {
+			//glUniform4fv(colorLocation, 1, &white[0]);
+			shader.setUniform(colorLocation, white);
+		} else {
+			//glUniform4fv(colorLocation, 1, &lastRenderSettings.color[0]);
+			shader.setUniform(colorLocation, lastRenderSettings.color);
+		}
+		if (lastRenderSettings.pixelBlending) {
+			//glUniform1i(pixelBlendingLocation, true);
+			shader.setUniform(pixelBlendingLocation, true);
+			auto colorKey = lastRenderSettings.texture->pixel(0, lastRenderSettings.texture->size().y - 1);
+			//glUniform4fv(pixelBlendingColorLocation, 1, &colorKey[0]);
+			shader.setUniform(pixelBlendingColorLocation, colorKey);
+		} else {
+			//glUniform1i(pixelBlendingLocation, false);
+			shader.setUniform(pixelBlendingLocation, false);
+		}
+		buffer_.draw(Primitives::Triangles, start, renderCount, indexBuffer_);
+		start += renderCount;
+		renderCount = 0;
 	}
-	glBindVertexArray(0);
+	lastRenderSettings = renderSettings;
+	if (renderCount > 0) {
+		lastRenderSettings.texture->bind();
+		if (!lastRenderSettings.invalid) {
+			//glUniform4fv(colorLocation, 1, &white[0]);
+			shader.setUniform(colorLocation, white);
+		} else {
+			//glUniform4fv(colorLocation, 1, &lastRenderSettings.color[0]);
+			shader.setUniform(colorLocation, lastRenderSettings.color);
+		}
+		if (lastRenderSettings.pixelBlending) {
+			//glUniform1i(pixelBlendingLocation, true);
+			shader.setUniform(pixelBlendingLocation, true);
+			auto colorKey = lastRenderSettings.texture->pixel(0, lastRenderSettings.texture->size().y - 1);
+			//glUniform4fv(pixelBlendingColorLocation, 1, &colorKey[0]);
+			shader.setUniform(pixelBlendingColorLocation, colorKey);
+		} else {
+			//glUniform1i(pixelBlendingLocation, false);
+			shader.setUniform(pixelBlendingLocation, false);
+		}
+		buffer_.draw(Primitives::Triangles, start, renderCount, indexBuffer_);
+	}
+	//glBindVertexArray(0);
 }
 
 const std::string &LightwaveMesh::name() const {

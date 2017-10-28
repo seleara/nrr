@@ -23,7 +23,7 @@ bool GLWindowImpl::create(const std::string &title, uint32_t width, uint32_t hei
 	}
 
 	glfwMakeContextCurrent(window_);
-	glfwSwapInterval(1);
+	//glfwSwapInterval(1);
 
 	ImGui_ImplGlfwGL3_Init(window_, true);
 
@@ -37,6 +37,10 @@ bool GLWindowImpl::create(const std::string &title, uint32_t width, uint32_t hei
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+	glFrontFace(GL_CCW);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 
 	return true;
 }

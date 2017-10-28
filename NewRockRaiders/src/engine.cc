@@ -11,6 +11,8 @@
 #include <nrr/sprite/sprite.h>
 #include <nrr/sprite/spriterenderingsystem.h>
 #include <nrr/model/modelrenderingsystem.h>
+#include <nrr/level/levelsystem.h>
+#include <nrr/level/level.h>
 #include <nrr/math/camera.h>
 #include <nrr/math/camerasystem.h>
 #include <nrr/math/clock.h>
@@ -40,17 +42,26 @@ int Engine::run() {
 	ArchiveViewer archiveViewer(archive);
 	OpenGLViewer glViewer;
 
+	Shader modelShader;
+	modelShader.load("data/shaders/model.glsl");
+	modelShader.saveCache("model");
+
+	Shader levelShader;
+	levelShader.load("data/shaders/level.glsl");
+	levelShader.saveCache("level");
+
 	UniformBuffer::createUniformBuffer<Matrices>("mvp", 0);
 	UniformBuffer::bindUniformBuffer("mvp");
-	auto &mvp = UniformBuffer::uniformBuffer<Matrices>("mvp");
-	mvp.projection = glm::perspectiveFov(90.0f, 1280.0f, 720.0f, 0.1f, 1000.0f);
-	UniformBuffer::updateUniformBuffer("mvp");
+	auto mvp = UniformBuffer::uniformBuffer<Matrices>("mvp");
+	mvp->projection = glm::perspectiveFov(90.0f, 1280.0f, 720.0f, 0.1f, 1000.0f);
+	mvp.update(); //UniformBuffer::updateUniformBuffer("mvp");
 
 	UniformBuffer::createUniformBuffer<Matrices>("mvp2d", 1);
 	UniformBuffer::bindUniformBuffer("mvp2d");
-	auto &mvp2d = UniformBuffer::uniformBuffer<Matrices>("mvp2d");
-	mvp2d.projection = glm::ortho(0.0f, 1280.0f, 720.0f, 0.0f);
-	UniformBuffer::updateUniformBuffer("mvp2d");
+	auto mvp2d = UniformBuffer::uniformBuffer<Matrices>("mvp2d");
+	mvp2d->projection = glm::ortho(0.0f, 1280.0f, 720.0f, 0.0f);
+	mvp2d.update();
+	//UniformBuffer::updateUniformBuffer("mvp2d");
 
 	Shader spriteShader;
 	spriteShader.load("data/shaders/sprite.glsl");
@@ -61,6 +72,7 @@ int Engine::run() {
 
 	em.registerSystem<SpriteRenderingSystem>();
 	em.registerSystem<ModelRenderingSystem>();
+	em.registerSystem<LevelSystem>();
 	em.registerSystem<CameraSystem>();
 
 	auto test = em.create();
@@ -68,7 +80,8 @@ int Engine::run() {
 	//test.add<SpriteComponent>()->texture.rectangle().load(archive, "languages/loading.bmp");
 
 	auto camera = em.create();
-	camera.add<TransformComponent>()->position = glm::vec3(-8, 16, 16);
+	//camera.add<TransformComponent>()->position = glm::vec3(-20, 40, 40);
+	camera.add<TransformComponent>()->position = glm::vec3(-20, 80, 40);
 	auto cameraComponent = camera.add<CameraComponent>();
 	CameraComponent::main = cameraComponent.ptr();
 	cameraComponent->mode = CameraMode::Target;
@@ -83,24 +96,35 @@ int Engine::run() {
 	std::cout << "Lego*/Main/FPLightRGB = " << col2.x << ", " << col2.y << ", " << col2.z << std::endl;
 
 	auto raider1 = em.create();
-	auto raider2 = em.create();
+	//auto raider2 = em.create();
 	raider1.add<TransformComponent>()->position = glm::vec3(4, 0, 0);
-	raider2.add<TransformComponent>()->position = glm::vec3(-4, 0, 0);
+	//raider2.add<TransformComponent>()->position = glm::vec3(-4, 0, 0);
 	auto model = raider1.add<ModelComponent>();
-	auto model2 = raider2.add<ModelComponent>();
+	//auto model2 = raider2.add<ModelComponent>();
 	//model.load(archive, "buildings/barracks/barracks.ae");
 	//model.load(archive, "buildings/powerstation/powerstation.ae");
 	model->load(archive, "mini-figures/pilot/pilot.ae");
 	model->play("Activity_Drill");
-	model2->load(archive, "mini-figures/pilot/pilot.ae");
-	model2->play("Activity_Eat");
+	//model2->load(archive, "mini-figures/pilot/pilot.ae");
+	//model2->play("Activity_Eat");
 
-	auto barracks = em.create();
-	barracks.add<TransformComponent>()->position = glm::vec3(-20, 0, 0);
-	auto barracksModel = barracks.add<ModelComponent>();
+	auto level = em.create();
+	level.add<Level>()->load(cfg, archive, 1);
+
+	//auto barracks = em.create();
+	//barracks.add<TransformComponent>()->position = glm::vec3(-20, 0, 0);
+	//auto barracksModel = barracks.add<ModelComponent>(archive, "buildings/toolstation/toolstation.ae", "Activity_Stand");
 	//barracksModel->load(archive, "buildings/barracks/barracks.ae");
-	barracksModel->load(archive, "vehicles/smalldigger/smalldigger.ae");
-	barracksModel->play("Activity_Stand");
+	//barracksModel->load(archive, "vehicles/lmlp/lmlp.ae");
+	//barracksModel->play("Activity_Stand");
+
+	for (int i = 0; i < 20; ++i) {
+		auto raider = em.create();
+		raider.add<TransformComponent>()->position = glm::vec3(4, 0, 4 * i);
+		auto model = raider.add<ModelComponent>();
+		model->load(archive, "mini-figures/pilot/pilot.ae");
+		model->play("Activity_Drill");
+	}
 
 	Texture whiteTexture;
 	std::vector<unsigned char> whitePixel = { 0xff, 0xff, 0xff, 0xff };
@@ -133,7 +157,7 @@ int Engine::run() {
 		}
 		em.update();
 
-		window_.clear(glm::vec4(0.5f, 0.5f, 0.5f, 1.0f));
+		window_.clear(glm::vec4(0.4f, 0.4f, 0.4f, 1.0f));
 		em.render();
 		em.render2d();
 

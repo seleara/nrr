@@ -102,6 +102,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -111,16 +112,19 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="data\shaders\common\common.glsl" />
     <None Include="data\shaders\common\common2d.glsl" />
     <None Include="data\shaders\common\lighting.glsl" />
+    <None Include="data\shaders\level.glsl" />
     <None Include="data\shaders\model.glsl" />
     <None Include="data\shaders\sprite.glsl" />
     <None Include="NrrShared.props" />
@@ -132,6 +136,8 @@
     <ClCompile Include="src\ecs\common\basepool.cc" />
     <ClCompile Include="src\ecs\entities\entity.cc" />
     <ClCompile Include="src\engine.cc" />
+    <ClCompile Include="src\level\level.cc" />
+    <ClCompile Include="src\level\levelsystem.cc" />
     <ClCompile Include="src\main.cc" />
     <ClCompile Include="src\math\camera.cc" />
     <ClCompile Include="src\math\clock.cc" />
@@ -163,14 +169,20 @@
     <ClInclude Include="include\nrr\ecs\entities\entity.h" />
     <ClInclude Include="include\nrr\ecs\entities\entitymanager.h" />
     <ClInclude Include="include\nrr\ecs\systems\basesystem.h" />
+    <ClInclude Include="include\nrr\level\level.h" />
+    <ClInclude Include="include\nrr\level\levelsystem.h" />
+    <ClInclude Include="include\nrr\level\map.h" />
     <ClInclude Include="include\nrr\math\camera.h" />
     <ClInclude Include="include\nrr\math\camerasystem.h" />
     <ClInclude Include="include\nrr\math\clock.h" />
+    <ClInclude Include="include\nrr\math\gl\gluniformbuffer.h" />
     <ClInclude Include="include\nrr\math\time.h" />
     <ClInclude Include="include\nrr\math\transform.h" />
     <ClInclude Include="include\nrr\math\uniformbuffer.h" />
     <ClInclude Include="include\nrr\math\vertexbuffer.h" />
     <ClInclude Include="include\nrr\model\modelrenderingsystem.h" />
+    <ClInclude Include="include\nrr\resource\texture\gl\gltextureatlas.h" />
+    <ClInclude Include="include\nrr\resource\texture\textureatlas.h" />
     <ClInclude Include="include\nrr\sprite\sprite.h" />
     <ClInclude Include="include\nrr\sprite\spriterenderingsystem.h" />
     <ClInclude Include="include\nrr\ecs\systems\system.h" />

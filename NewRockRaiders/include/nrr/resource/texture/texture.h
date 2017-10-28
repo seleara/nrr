@@ -15,6 +15,8 @@ enum class TextureType {
 
 class TextureResource : public Resource {
 public:
+	virtual void add(WadArchive &archive, const std::string &path, const glm::ivec2 &pixelPosition, const glm::ivec2 &destSize=glm::ivec2(0, 0)) = 0;
+	virtual void create(int width, int height, unsigned char *pixels) = 0;
 	virtual void bind() = 0;
 	virtual void release() = 0;
 	TextureType type() const {
@@ -61,6 +63,8 @@ public:
 
 	void create(int width, int height, unsigned char *pixels);
 
+	void add(WadArchive &archive, const std::string &path, const glm::ivec2 &pixelPosition, const glm::ivec2 &destSize = glm::ivec2(0, 0));
+
 	void saveCache(const std::string &cacheName);
 	void loadCache(const std::string &cacheName);
 
@@ -78,12 +82,14 @@ private:
 
 class TextureLoader {
 public:
-	static std::shared_ptr<TextureResource> load(WadArchive &archive, std::string path, TextureType type=TextureType::Normalized);
+	static std::shared_ptr<TextureResource> load(WadArchive &archive, std::string path, TextureType type = TextureType::Normalized);
+	static std::shared_ptr<TextureResource> create(int width, int height, unsigned char *pixels, TextureType type = TextureType::Normalized);
 	static void unload(const std::string &path);
 
 	static std::shared_ptr<TextureResource> loadCache(const std::string &cacheName);
 	static void saveCache(const std::string &cacheName, std::shared_ptr<TextureResource> resource);
 private:
+	static int createdCount_;
 	friend class OpenGLViewer;
 	static std::unordered_map<std::string, std::shared_ptr<TextureResource>> textures_;
 	static std::unordered_map<std::string, std::shared_ptr<TextureResource>> cache_;

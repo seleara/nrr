@@ -26,7 +26,7 @@ void LightwaveAnimation::load(WadArchive &archive, const std::string &path) {
 		if (commentPos != std::string::npos)
 			line.erase(commentPos);
 		StringUtil::trim(line);
-		auto tokens = StringUtil::split(line);
+		auto tokens = StringUtil::splitRef(line);//StringUtil::split(line);
 		if (tokens.size() == 0) continue;
 		//std::cout << tokens[0] << std::endl;
 		if (tokens[0] == "FramesPerSecond") {
@@ -43,7 +43,7 @@ void LightwaveAnimation::load(WadArchive &archive, const std::string &path) {
 			ss << tokens[1];
 			ss >> lastFrame_;
 		} else if (tokens[0] == "LoadObject") {
-			auto baseName = tokens[1];
+			std::string baseName(tokens[1]);
 			auto baseNamePos = baseName.rfind('\\');
 			if (baseNamePos != std::string::npos) {
 				baseName.erase(0, baseNamePos + 1);
@@ -52,34 +52,39 @@ void LightwaveAnimation::load(WadArchive &archive, const std::string &path) {
 			ObjectInfo objInfo;
 			objInfo.name = baseName;
 
-			auto &meshes = ((AnimatedEntityResource *)model_)->meshes_;
-			auto iter = meshes.find(baseName);
-			if (iter == meshes.end()) {
-				auto mesh = std::make_unique<LightwaveMesh>(model_);
+			//auto &meshes = ((AnimatedEntityResource *)model_)->meshes_;
+			//auto iter = meshes.find(baseName);
+			//if (iter == meshes.end()) {
 
-				auto slashPos = path.rfind('/');
-				std::string folder;
-				if (slashPos)
-					folder = path.substr(0, slashPos + 1);
+			//auto mesh = std::make_unique<LightwaveMesh>(model_);
 
-				std::string sharedFolder = "world/shared/";
+			auto slashPos = path.rfind('/');
+			std::string folder;
+			if (slashPos)
+				folder = path.substr(0, slashPos + 1);
 
-				auto curPos = stream.tellg();
-				if (archive.exists(folder + baseName)) {
-					mesh->load(archive, folder + baseName);
-				} else if (archive.exists(sharedFolder + baseName)) {
-					mesh->load(archive, sharedFolder + baseName);
-				} else {
-					// Unable to find mesh in the usual places
-					std::cerr << "Warning: Mesh \"" << baseName << "\" not found in LWS folder or world/shared/, skipping.\n";
-					continue;
-				}
-				stream.seekg(curPos);
-				objInfo.mesh = mesh.get();
-				meshes.insert({ baseName, std::move(mesh) });
+			std::string sharedFolder = "world/shared/";
+
+			auto curPos = stream.tellg();
+			std::shared_ptr<ModelMesh> mesh;
+			if (archive.exists(folder + baseName)) {
+				//mesh->load(archive, folder + baseName);
+				mesh = LightwaveMeshLoader::load(archive, folder + baseName);
+			} else if (archive.exists(sharedFolder + baseName)) {
+				//mesh->load(archive, sharedFolder + baseName);
+				mesh = LightwaveMeshLoader::load(archive, sharedFolder + baseName);
 			} else {
-				objInfo.mesh = iter->second.get();
+				// Unable to find mesh in the usual places
+				std::cerr << "Warning: Mesh \"" << baseName << "\" not found in LWS folder or world/shared/, skipping.\n";
+				continue;
 			}
+			stream.seekg(curPos);
+			objInfo.mesh = mesh.get();
+			//meshes.insert({ baseName, mesh });
+
+			/*} else {
+				objInfo.mesh = iter->second.get();
+			}*/
 			objects_.push_back(objInfo);
 		} else if (tokens[0] == "AddNullObject") {
 			ObjectInfo objInfo;
@@ -87,7 +92,7 @@ void LightwaveAnimation::load(WadArchive &archive, const std::string &path) {
 			objInfo.mesh = nullptr;
 			objects_.push_back(objInfo);
 		} else if (tokens[0] == "ObjectMotion") {
-			auto name = tokens[1]; // Usually (unnamed)
+			std::string name(tokens[1]); // Usually (unnamed)
 			auto &obj = objects_.back();
 			auto &keyframes = obj.keyframes;
 
@@ -217,14 +222,16 @@ void AnimatedEntityResource::load(WadArchive &archive, const std::string &path) 
 ModelAnimation *AnimatedEntityResource::loadAnimation(const std::string &animationName) {
 	//auto activityStand = ae.get("Lego*/Activities/Activity_Stand");
 	auto activity = ae_.get("Lego*/Activities/" + animationName);
-	auto standFile = folder_ + ae_.get("Lego*/" + activity + "/FILE") + ".lws";
+	auto animationFile = folder_ + ae_.get("Lego*/" + activity + "/FILE") + ".lws";
 
-	auto anim = std::make_unique<LightwaveAnimation>(this);
-	anim->load(*archive_, standFile);
+	auto anim = LightwaveAnimationLoader::load(*archive_, animationFile);
 
-	animations_.insert({ activity, std::move(anim) });
+	/*auto anim = std::make_unique<LightwaveAnimation>(this);
+	anim->load(*archive_, animationFile);*/
 
-	return animations_[activity].get();
+	animations_.insert({ activity, anim });
+
+	return anim.get();
 }
 
 const std::string &AnimatedEntityResource::name() const {

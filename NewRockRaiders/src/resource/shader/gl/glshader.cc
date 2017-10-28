@@ -29,10 +29,28 @@ void GLShaderResource::load(const std::string &path) {
 	glDetachShader(program_, fs);
 	glDeleteShader(vs);
 	glDeleteShader(fs);
+
+
 }
 
 int GLShaderResource::uniformLocation(const std::string &name) const {
 	return glGetUniformLocation(program_, name.c_str());
+}
+
+void GLShaderResource::setUniform1i(uint32_t position, int value) {
+	glUniform1i(position, value);
+}
+
+void GLShaderResource::setUniform2fv(uint32_t position, const glm::vec2 &value) {
+	glUniform2fv(position, 1, &value[0]);
+}
+
+void GLShaderResource::setUniform3fv(uint32_t position, const glm::vec3 &value) {
+	glUniform3fv(position, 1, &value[0]);
+}
+
+void GLShaderResource::setUniform4fv(uint32_t position, const glm::vec4 &value) {
+	glUniform4fv(position, 1, &value[0]);
 }
 
 bool GLShaderResource::compileShader(GLuint shader, const std::string &source, const std::string &guard) {

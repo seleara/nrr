@@ -4,15 +4,17 @@
 #include <memory>
 #include <string>
 
+#include <glm/glm.hpp>
+
 #include <nrr/resource/resource.h>
 #include <nrr/resource/resourceloader.h>
 #include <nrr/math/vertexbuffer.h>
 
 class ModelResource;
 
-class ModelMesh {
+class ModelMesh : public Resource {
 public:
-	ModelMesh(ModelResource *model) : model_(model) {}
+	//ModelMesh(ModelResource *model) : model_(model) {}
 	virtual void load(WadArchive &archive, const std::string &path) {}
 	virtual void load(unsigned char *data, size_t size) {}
 	virtual void fixedUpdate() {};
@@ -24,12 +26,12 @@ protected:
 	VertexBuffer<float> buffer_;
 	VertexBuffer<int> indexBuffer_;
 	GLuint vao_;
-	ModelResource *model_;
+	//ModelResource *model_;
 };
 
-class ModelAnimation {
+class ModelAnimation : public Resource {
 public:
-	ModelAnimation(ModelResource *model) : model_(model) {}
+	//ModelAnimation(ModelResource *model) : model_(model) {}
 	virtual void load(WadArchive &archive, const std::string &path) {}
 	virtual void load(unsigned char *data, size_t size) {}
 	virtual void fixedUpdate() {}
@@ -37,10 +39,13 @@ public:
 	virtual void render() {}
 	virtual const std::string &name() const = 0;
 protected:
-	ModelResource *model_;
+	//ModelResource *model_;
 
 	friend class AnimationWrapper;
 };
+
+class ObjectInfo;
+class LightwaveAnimation;
 
 class AnimationWrapper {
 public:
@@ -56,9 +61,16 @@ public:
 private:
 	friend class ModelRenderingSystem;
 
+	glm::mat4 calculateMatrix(LightwaveAnimation *anim, ObjectInfo &obj, int frame);
+
 	int currentSequenceFrame_ = 0;
 	int currentFrame_ = 0;
 	double time_ = 0;
+	struct DirtyMatrix {
+		bool valid = false;
+		glm::mat4 matrix;
+	};
+	std::vector<DirtyMatrix> matrices_;
 	ModelAnimation *animation_ = nullptr;
 };
 
@@ -73,6 +85,7 @@ public:
 			return AnimationWrapper(loadAnimation(animationName));
 		}
 		AnimationWrapper anim(iter->second.get());
+		return anim;
 	}
 
 	void fixedUpdate();
@@ -84,8 +97,8 @@ public:
 protected:
 	friend class ModelMesh;
 	friend class ModelAnimation;
-	std::map<std::string, std::unique_ptr<ModelMesh>> meshes_;
-	std::map<std::string, std::unique_ptr<ModelAnimation>> animations_;
+	std::map<std::string, std::shared_ptr<ModelMesh>> meshes_;
+	std::map<std::string, std::shared_ptr<ModelAnimation>> animations_;
 };
 
 class ModelWrapper {

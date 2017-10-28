@@ -35,14 +35,14 @@ in VertexData {
 	vec4 color;
 } fs_in;
 
-uniform vec4 color;
-uniform bool pixelBlending;
-uniform vec4 pixelBlendingColor;
+layout(location = 0) uniform vec4 color;
+layout(location = 1) uniform bool pixelBlending;
+layout(location = 2) uniform vec4 pixelBlendingColor;
 
 out vec4 outColor;
 
-uniform sampler2D tex;
-uniform sampler2D normalTex;
+layout(location = 3) uniform sampler2D tex;
+layout(location = 4) uniform sampler2D normalTex;
 
 void main() {
 	/*vec4 bump = bumpmap(normalTex, fs_in.texcoord);

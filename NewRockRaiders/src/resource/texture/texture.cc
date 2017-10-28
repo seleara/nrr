@@ -2,6 +2,7 @@
 #include <nrr/resource/texture/gl/gltexture.h>
 
 #include <algorithm>
+#include <sstream>
 
 #include <nrr/stb/stb_image.h>
 
@@ -52,10 +53,54 @@ void GLTextureResource::create(int width, int height, unsigned char *pixels) {
 	release();
 
 	pixels_.resize(width * height * 4);
-	std::copy(pixels, pixels + (width * height * 4), pixels_.begin());
+	if (pixels) {
+		std::copy(pixels, pixels + (width * height * 4), pixels_.begin());
+	}
 
 	std::string label = "Memory Texture";
 	glObjectLabel(texEnum, textureId_, static_cast<GLsizei>(label.size()), label.c_str());
+}
+
+void GLTextureResource::add(WadArchive &archive, const std::string &path, const glm::ivec2 &pixelPosition, const glm::ivec2 &destSize) {
+	const auto &entry = archive.get(path);
+	auto &is = archive.getStream(entry);
+	unsigned char *buffer = new unsigned char[entry.size];
+	is.read(reinterpret_cast<char *>(buffer), entry.size);
+	int width, height, channels;
+	unsigned char *data = stbi_load_from_memory(buffer, entry.size, &width, &height, &channels, 4);
+
+	unsigned char *pixels;
+	/*if (destSize.x != 0 && destSize.y != 0) {
+		// Custom size
+		if ((destSize.x % width) != 0 || (destSize.y % height) != 0) {
+			throw std::runtime_error("Unsupported destination size. Only multiples of the original size are supported.");
+		}
+		auto mulY = destSize.y / height;
+		auto mulX = destSize.x / width;
+		pixels = new unsigned char[width * height * mulX * mulY];
+		for (int y = 0; y < height; ++y) {
+			for (int x = 0; x < width; ++x) {
+				for (int my = 0; my < mulY; ++my) {
+					for (int mx = 0; mx < mulX; ++mx) {
+						pixels[y * mulY * width * mulX + ]
+					}
+				}
+			}
+		}
+		width *= mulX;
+		height *= mulY;
+	} else {*/
+		pixels = data;
+	//}
+
+	auto texEnum = getEnum();
+	bind();
+	glTexSubImage2D(texEnum, 0, pixelPosition.x, pixelPosition.y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	release();
+
+	std::copy(pixels, pixels + (width * height * 4), pixels_.begin() + (pixelPosition.y * size_.x + pixelPosition.x) * 4);
+
+	stbi_image_free(data);
 }
 
 void GLTextureResource::bind() {
@@ -84,14 +129,17 @@ void TextureWrapper::load(WadArchive &archive, const std::string &path) {
 }
 
 void TextureWrapper::create(int width, int height, unsigned char *pixels) {
-	resource_ = std::make_shared<GLTextureResource>();
-	resource_->type_ = type_;
-	((GLTextureResource *)resource_.get())->create(width, height, pixels);
+	resource_ = TextureLoader::create(width, height, pixels);
+}
+
+void TextureWrapper::add(WadArchive &archive, const std::string &path, const glm::ivec2 &pixelPosition, const glm::ivec2 &destSize) {
+	resource_->add(archive, path, pixelPosition, destSize);
 }
 
 void TextureWrapper::saveCache(const std::string &cacheName) {
 	TextureLoader::saveCache(cacheName, resource_);
 }
+
 void TextureWrapper::loadCache(const std::string &cacheName) {
 	resource_ = TextureLoader::loadCache(cacheName);
 }
@@ -115,6 +163,18 @@ std::shared_ptr<TextureResource> TextureLoader::load(WadArchive &archive, std::s
 		return resource;
 	}
 	return it->second;
+}
+
+int TextureLoader::createdCount_ = 0;
+
+std::shared_ptr<TextureResource> TextureLoader::create(int width, int height, unsigned char *pixels, TextureType type) {
+	std::shared_ptr<TextureResource> resource = std::make_shared<GLTextureResource>();
+	resource->type_ = type;
+	resource->create(width, height, pixels);
+	std::stringstream ss;
+	ss << "Memory Texture " << createdCount_;
+	textures_.insert({ ss.str(), resource });
+	return resource;
 }
 
 void TextureLoader::unload(const std::string &path) {

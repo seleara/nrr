@@ -22,6 +22,14 @@ int ShaderWrapper::uniformLocation(const std::string &name) const {
 	return resource_->uniformLocation(name);
 }
 
+void ShaderWrapper::saveCache(const std::string &cacheName) {
+	ShaderLoader::saveCache(cacheName, resource_);
+}
+
+void ShaderWrapper::loadCache(const std::string &cacheName) {
+	resource_ = ShaderLoader::loadCache(cacheName);
+}
+
 std::string ShaderResource::preprocessShaderSource(const std::string &path) {
 	auto slash = path.rfind('/');
 	std::string dir;

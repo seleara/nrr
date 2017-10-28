@@ -35,10 +35,26 @@ public:
 	static void unload(const std::string &path) {
 
 	}
+
+	static std::shared_ptr<BaseType> loadCache(const std::string &cacheName) {
+		auto iter = cache_.find(cacheName);
+		if (iter == cache_.end()) {
+			return nullptr;
+		}
+		return iter->second;
+	}
+
+	static void saveCache(const std::string &cacheName, std::shared_ptr<BaseType> resource) {
+		cache_[cacheName] = resource;
+	}
 private:
 	friend class OpenGLViewer;
 	static std::unordered_map<std::string, std::shared_ptr<BaseType>> resources_;
+	static std::unordered_map<std::string, std::shared_ptr<BaseType>> cache_;
 };
 
 template <typename BaseType, typename GLType, typename VkType=GLType, typename DxType=GLType>
 std::unordered_map<std::string, std::shared_ptr<BaseType>> ResourceLoader<BaseType, GLType, VkType, DxType>::resources_;
+
+template <typename BaseType, typename GLType, typename VkType = GLType, typename DxType = GLType>
+std::unordered_map<std::string, std::shared_ptr<BaseType>> ResourceLoader<BaseType, GLType, VkType, DxType>::cache_;

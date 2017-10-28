@@ -3,7 +3,33 @@
 #include <algorithm>
 #include <cctype>
 #include <string>
+#include <string_view>
 #include <vector>
+
+// string_view additions
+std::string operator+(const std::string &s, const std::string_view &sv);
+std::string operator+(const std::string_view &sv, const std::string &s);
+
+class FastStringUtilHashMap {
+public:
+	FastStringUtilHashMap() {
+		map_.resize(0x100);
+	}
+
+	void clear() {
+		std::fill(map_.begin(), map_.end(), 0);
+	}
+
+	void set(char c) {
+		map_[c] = 1;
+	}
+
+	bool has(char c) {
+		return map_[c];
+	}
+private:
+	std::vector<int> map_;
+};
 
 class StringUtil {
 public:
@@ -11,6 +37,7 @@ public:
 	static Separators Whitespace;
 
 	static std::vector<std::string> split(const std::string &s, const Separators &sep = Whitespace);
+	static std::vector<std::string_view> StringUtil::splitRef(const std::string &s, const StringUtil::Separators &sep = Whitespace);
 
 	static std::string utf8_substr(const std::string &str, unsigned int start, unsigned int leng) {
 		if (leng == 0) { return ""; }
@@ -102,4 +129,5 @@ public:
 		return str;
 	}
 private:
+	static FastStringUtilHashMap splitRefMap_;
 };

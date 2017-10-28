@@ -89,7 +89,8 @@ public:
 			pool = (Pool<C> *)iter->second;
 		}
 		entityComponents_[id].push_back(C::id());
-		::new(pool->get(id)) C(std::forward<Args>(args)...);
+		void *ptr = pool->get(id);
+		::new(ptr) C(std::forward<Args>(args)...);
 		ComponentWrapper<C> wrapper(this, id);
 		return wrapper;
 	}
