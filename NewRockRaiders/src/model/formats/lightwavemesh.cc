@@ -103,7 +103,7 @@ void LightwaveMesh::readPoints(int chunkSize, BinaryReader &br) {
 		Vertex vert;
 		vert.point.x = br.readBE<float>();
 		vert.point.y = br.readBE<float>();
-		vert.point.z = br.readBE<float>();
+		vert.point.z = -br.readBE<float>();
 		points.push_back(vert);
 	}
 }
@@ -269,6 +269,13 @@ void LightwaveMesh::readSurface(int chunkSize, BinaryReader &br, WadArchive &arc
 				}
 			}
 
+			if ((timg[0] == 'A' || timg[0] == 'a') && timg[4] == '_') {
+				// Color key
+				auto colorKeyIndex = (timg[3] - 48) + (timg[2] - 48) * 10 + (timg[1] - 48) * 100;
+				surf.ctex.colorKey = surf.ctex.textures[0].palette(colorKeyIndex);
+				surf.ctex.hasColorKey = true;
+			}
+
 			if (surf.ctex.textures.size() > maxSequenceFrames_) {
 				maxSequenceFrames_ = surf.ctex.textures.size() - 1;
 			}
@@ -351,6 +358,14 @@ void LightwaveMesh::loadExternalUV(WadArchive &archive, const std::string &path,
 			std::cerr << "Warning: Texture \"" << trimmedTexturePath << "\" not found in LWO folder or world/shared/, creating dummy texture.\n";
 			texture.create(1, 1, nullptr);
 		}
+
+		if ((trimmedTexturePath[0] == 'A' || trimmedTexturePath[0] == 'a') && trimmedTexturePath[4] == '_') {
+			// Color key
+			auto colorKeyIndex = (trimmedTexturePath[3] - 48) + (trimmedTexturePath[2] - 48) * 10 + (trimmedTexturePath[1] - 48) * 100;
+			surf.ctex.colorKey = surf.ctex.textures[0].palette(colorKeyIndex);
+			surf.ctex.hasColorKey = true;
+		}
+
 		uvStream.seekg(pos);
 	}
 	int polys;
@@ -448,11 +463,13 @@ void LightwaveMesh::render(int sequenceFrame, Shader &shader, Texture &whiteText
 	//glUniform4fv(colorLocation, 1, &white[0]);
 	struct RenderSettings {
 		TextureResource *texture = nullptr;
-		bool pixelBlending = false;
+		bool hasColorKey = false;
+		glm::ivec4 colorKey;
+		bool additive = false;
 		bool invalid = false;
 		glm::vec4 color;
 		bool operator==(const RenderSettings &other) {
-			return other.texture == texture && other.pixelBlending == pixelBlending && other.invalid == invalid && other.color == color;
+			return other.texture == texture && other.hasColorKey == hasColorKey && other.invalid == invalid && other.color == color && other.colorKey == colorKey;
 		}
 	} renderSettings, lastRenderSettings;
 
@@ -486,8 +503,8 @@ void LightwaveMesh::render(int sequenceFrame, Shader &shader, Texture &whiteText
 					//texture = &surf.ctex.textures[sequenceFrame % surf.ctex.textures.size()];
 					renderSettings.texture = surf.ctex.textures[sequenceFrame % surf.ctex.textures.size()].get();
 				}
-				if (surf.ctex.flag & 32 && !renderSettings.invalid) {
-					renderSettings.pixelBlending = true;
+				//if (surf.ctex.flag & 32 && !renderSettings.invalid) {
+				//	renderSettings.pixelBlending = true;
 					/*if (!blending) {
 						glUniform1i(pixelBlendingLocation, true);
 						blending = true;
@@ -496,14 +513,25 @@ void LightwaveMesh::render(int sequenceFrame, Shader &shader, Texture &whiteText
 					glUniform4fv(pixelBlendingColorLocation, 1, &colorKey[0]);*/
 					//std::cout << "pixel blending on surf \"" << surfs[i - 1].name << "\".\n";
 					//glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
-				} else {
-					renderSettings.pixelBlending = false;
+				//} else {
+				//	renderSettings.pixelBlending = false;
 					/*_if (blending) {
 						glUniform1i(pixelBlendingLocation, false);
 						blending = false;
 					}*/
 					//std::cout << "NO pixel blending on surf \"" << surfs[i - 1].name << "\".\n";
 					//glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+				//}
+				if (surf.ctex.hasColorKey && !renderSettings.invalid) {
+					renderSettings.hasColorKey = true;
+					renderSettings.colorKey = surf.ctex.colorKey;
+				} else {
+					renderSettings.hasColorKey = false;
+				}
+				if (surf.flags & 0x100) {
+					renderSettings.additive = true;
+				} else {
+					renderSettings.additive = false;
 				}
 			} else {
 				renderSettings.texture = whiteTexture.get();
@@ -523,12 +551,19 @@ void LightwaveMesh::render(int sequenceFrame, Shader &shader, Texture &whiteText
 		} else {
 			shader.setUniform(colorLocation, lastRenderSettings.color);
 		}
-		if (lastRenderSettings.pixelBlending) {
+		if (lastRenderSettings.hasColorKey) {
 			shader.setUniform(pixelBlendingLocation, true);
-			auto colorKey = lastRenderSettings.texture->pixel(0, lastRenderSettings.texture->size().y - 1);
-			shader.setUniform(pixelBlendingColorLocation, colorKey);
+			//auto colorKey = lastRenderSettings.texture->pixel(0, lastRenderSettings.texture->size().y - 1);
+			shader.setUniform(pixelBlendingColorLocation, (glm::vec4)lastRenderSettings.colorKey / 255.0f);
 		} else {
 			shader.setUniform(pixelBlendingLocation, false);
+		}
+		if (lastRenderSettings.additive) {
+			glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+			glDepthMask(GL_FALSE);
+		} else {
+			glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+			glDepthMask(GL_TRUE);
 		}
 		buffer_.draw(Primitives::Triangles, start, renderCount, indexBuffer_);
 		start += renderCount;
@@ -542,15 +577,23 @@ void LightwaveMesh::render(int sequenceFrame, Shader &shader, Texture &whiteText
 		} else {
 			shader.setUniform(colorLocation, lastRenderSettings.color);
 		}
-		if (lastRenderSettings.pixelBlending) {
+		if (lastRenderSettings.hasColorKey) {
 			//shader.setUniform(pixelBlendingLocation, true);
 			// TODO: Fix this. Basic color key transparency isn't decided by anything in the LWO file but instead by the prefix A###_ in the bmp file itself
 			// where ### is the index in the color palette.
-			shader.setUniform(pixelBlendingLocation, false);
-			auto colorKey = lastRenderSettings.texture->pixel(0, lastRenderSettings.texture->size().y - 1);
-			shader.setUniform(pixelBlendingColorLocation, colorKey);
+			shader.setUniform(pixelBlendingLocation, true);
+			//auto colorKey = //lastRenderSettings.texture->pixel(0, lastRenderSettings.texture->size().y - 1);
+			//shader.setUniform(pixelBlendingColorLocation, colorKey);
+			shader.setUniform(pixelBlendingColorLocation, glm::vec4(lastRenderSettings.colorKey.r / 255.0f, lastRenderSettings.colorKey.g / 255.0f, lastRenderSettings.colorKey.b / 255.0f, lastRenderSettings.colorKey.a / 255.0f));
 		} else {
 			shader.setUniform(pixelBlendingLocation, false);
+		}
+		if (lastRenderSettings.additive) {
+			glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+			glDepthMask(GL_FALSE);
+		} else {
+			glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+			glDepthMask(GL_TRUE);
 		}
 		buffer_.draw(Primitives::Triangles, start, renderCount, indexBuffer_);
 	}

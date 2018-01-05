@@ -36,6 +36,9 @@ void GLTextureResource::load(WadArchive &archive, const std::string &path) {
 
 	glObjectLabel(GL_TEXTURE, textureId_, static_cast<GLsizei>(path.size()), path.c_str());
 
+	loadPalette(buffer);
+
+	delete[] buffer;
 	stbi_image_free(data);
 }
 
@@ -100,7 +103,31 @@ void GLTextureResource::add(WadArchive &archive, const std::string &path, const 
 
 	std::copy(pixels, pixels + (width * height * 4), pixels_.begin() + (pixelPosition.y * size_.x + pixelPosition.x) * 4);
 
+	loadPalette(buffer);
+	
+	delete[] buffer;
 	stbi_image_free(data);
+}
+
+void GLTextureResource::loadPalette(const unsigned char *buffer) {
+	if (strncmp((const char *)buffer, "BM", 2) == 0) {
+		auto bpp = *(uint16_t *)(buffer + 0x1c);
+		if (bpp < 16) {
+			auto colors = *(uint32_t *)(buffer + 0x2e);
+			if (colors == 0) {
+				colors = std::pow(2, bpp);
+			}
+			auto paletteOffset = 0x36;
+			for (int i = 0; i < colors; ++i) {
+				glm::ivec4 color;
+				color.b = buffer[paletteOffset + 4 * i + 0];
+				color.g = buffer[paletteOffset + 4 * i + 1];
+				color.r = buffer[paletteOffset + 4 * i + 2];
+				color.a = 255.0f;
+				palette_.push_back(color);
+			}
+		}
+	}
 }
 
 void GLTextureResource::bind() {
@@ -122,6 +149,10 @@ GLenum GLTextureResource::getEnum() const {
 glm::vec4 GLTextureResource::pixel(int x, int y) const {
 	int i = (y * size_.x + x) * 4;
 	return glm::vec4(pixels_[i + 0], pixels_[i + 1], pixels_[i + 2], pixels_[i + 3]) / 255.0f;
+}
+
+glm::vec4 GLTextureResource::palette(int index) const {
+	return palette_[index];
 }
 
 void TextureWrapper::load(WadArchive &archive, const std::string &path) {

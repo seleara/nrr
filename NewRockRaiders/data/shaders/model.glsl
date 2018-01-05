@@ -38,6 +38,7 @@ in VertexData {
 layout(location = 0) uniform vec4 color;
 layout(location = 1) uniform bool pixelBlending;
 layout(location = 2) uniform vec4 pixelBlendingColor;
+//layout(location = 3) uniform vec4 additive;
 
 out vec4 outColor;
 
@@ -70,12 +71,17 @@ void main() {
 		outColor.a = (outColor.r + outColor.g + outColor.b) / 3.0f;
 	}*/
 	float alpha = outColor.a;
-	if (alpha < 0.5) discard;
 	if (pixelBlending) {
 		//if (outColor.r < 0.02 && outColor.g < 0.02 && outColor.b < 0.02) discard;
 		//if (outColor == pixelBlendingColor) discard;
+		vec4 diff = abs(outColor - pixelBlendingColor);
+		if (diff.r < 0.02 && diff.g < 0.02 && diff.b < 0.02) discard;
 		//if (outColor.rgb == vec3(0, 0, 0)) discard;
 	}
+	if (alpha < 0.5) discard;
+	/*if (additive) {
+		outColor.a = (outColor.r + outColor.g + outColor.b) / 3.0;
+	}*/
 }
 
 #endif

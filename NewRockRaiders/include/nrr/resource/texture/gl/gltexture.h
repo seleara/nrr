@@ -12,6 +12,7 @@ public:
 	void bind() override;
 	void release() override;
 	glm::vec4 pixel(int x, int y) const override;
+	glm::vec4 palette(int index) const override;
 
 	GLuint id() const;
 private:
@@ -20,6 +21,9 @@ private:
 	GLenum getEnum() const;
 
 	std::vector<unsigned char> pixels_;
+	std::vector<glm::vec4> palette_;
+
+	void loadPalette(const unsigned char *buffer);
 
 	GLuint textureId_;
 };

@@ -109,7 +109,7 @@ void LightwaveAnimation::load(WadArchive &archive, const std::string &path) {
 				stream >> kf.position.x >> kf.position.y >> kf.position.z >> angles.y >> angles.x >> angles.z >> kf.scale.x >> kf.scale.y >> kf.scale.z >> kf.frame >> (int &)kf.linearValue >> kf.splineAdjustments.x >> kf.splineAdjustments.y >> kf.splineAdjustments.z;
 
 				angles /= 180.0f / glm::pi<float>();
-				//kf.position.z = -kf.position.z;
+				kf.position.z = -kf.position.z;
 				/*kf.rotation = glm::rotate(kf.rotation, -angles.x, glm::vec3(1, 0, 0));
 				kf.rotation = glm::rotate(kf.rotation, angles.y, glm::vec3(0, 1, 0));
 				kf.rotation = glm::rotate(kf.rotation, -angles.z, glm::vec3(0, 0, 1));*/

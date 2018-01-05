@@ -59,7 +59,7 @@ int Engine::run() {
 	std::cout << "Lego*/Main/FPLightRGB = " << col.x << ", " << col.y << ", " << col.z << std::endl;
 	std::cout << "Lego*/Main/FPLightRGB = " << col2.x << ", " << col2.y << ", " << col2.z << std::endl;
 
-	/*auto raider1 = em_.create();
+	auto raider1 = em_.create();
 	//auto raider2 = em_.create();
 	raider1.add<TransformComponent>()->position = glm::vec3(4, 0, 0);
 	//raider2.add<TransformComponent>()->position = glm::vec3(-4, 0, 0);
@@ -70,13 +70,13 @@ int Engine::run() {
 	model->load(archive_, "mini-figures/pilot/pilot.ae");
 	model->play("Activity_Drill");
 	//model2->load(archive, "mini-figures/pilot/pilot.ae");
-	//model2->play("Activity_Eat");*/
+	//model2->play("Activity_Eat");
 
 	auto captain = em_.create();
 	auto capT = captain.add<TransformComponent>();
-	capT->position = glm::vec3(5, 0, 0);
+	capT->position = glm::vec3(0, 0, 0);
 	capT->scale = glm::vec3(10, 10, 10);
-	capT->rotation = glm::angleAxis(3.1415f, glm::vec3(0, 1, 0)) * glm::angleAxis(1.58f, glm::vec3(1, 0, 0));
+	capT->rotation = glm::angleAxis(3.1415f, glm::vec3(1, 0, 0)) * glm::angleAxis(1.58f, glm::vec3(1, 0, 0));
 	auto capModel = captain.add<ModelComponent>();
 	capModel->create(archive_, "Captain");
 	capModel->playExternal("mini-figures/captain/new_captain_point_talking.lws");

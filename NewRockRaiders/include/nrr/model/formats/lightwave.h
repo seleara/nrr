@@ -29,6 +29,8 @@ struct LightwaveTexture {
 	glm::vec3 center;
 	double sequenceTime = 250;
 	int sequenceFrame = 0; // Used if the texture is a sequence
+	bool hasColorKey = false;
+	glm::ivec4 colorKey;
 };
 
 struct LightwaveSurface {

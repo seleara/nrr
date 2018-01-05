@@ -24,6 +24,7 @@ public:
 	}
 	const glm::ivec2 &size() const;
 	virtual glm::vec4 pixel(int x, int y) const = 0;
+	virtual glm::vec4 palette(int index) const = 0;
 protected:
 	friend class TextureLoader;
 	friend class TextureWrapper;
@@ -74,6 +75,10 @@ public:
 
 	glm::vec4 pixel(int x, int y) const {
 		return resource_->pixel(x, y);
+	}
+
+	glm::vec4 palette(int index) const {
+		return resource_->palette(index);
 	}
 private:
 	std::shared_ptr<TextureResource> resource_;
