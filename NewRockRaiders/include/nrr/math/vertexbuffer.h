@@ -37,7 +37,7 @@ public:
 		data_.resize(size);
 	}
 
-	void copy(T *source, size_t sourceOffset, size_t size, size_t destOffset) {
+	void copy(const T *source, size_t sourceOffset, size_t size, size_t destOffset) {
 		std::copy(source + sourceOffset, source + sourceOffset + size, data_.begin() + destOffset);
 	}
 
@@ -62,6 +62,11 @@ public:
 		create();
 		bind();
 		glBufferData(type_ == VertexBufferType::Array ? GL_ARRAY_BUFFER : GL_ELEMENT_ARRAY_BUFFER, size * sizeof(T), buffer, GL_DYNAMIC_DRAW);
+	}
+
+	void uploadPart(const void *buffer, int offset, size_t size) {
+		bind();
+		glBufferSubData(type_ == VertexBufferType::Array ? GL_ARRAY_BUFFER : GL_ELEMENT_ARRAY_BUFFER, offset, size * sizeof(T), buffer);
 	}
 
 	void bind() {

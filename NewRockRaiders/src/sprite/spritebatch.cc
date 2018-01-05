@@ -13,7 +13,7 @@
 #include <nrr/resource/shader/shader.h>
 
 void SpriteBatch::add(const Sprite &sprite, const Transform &transform) {
-	sprites_.push_back(std::make_pair(sprite, transform));
+	sprites_.emplace_back(sprite, transform);
 }
 
 void SpriteBatch::clear() {
@@ -24,7 +24,7 @@ void SpriteBatch::render() {
 	if (sprites_.size() == 0) return;
 	auto textures = upload();
 	Shader shader;
-	shader.load("data/shaders/sprite.glsl");
+	shader.loadCache("sprite");
 
 	//std::cout << textures.size() << std::endl;
 
@@ -146,7 +146,7 @@ std::vector<std::pair<size_t, TextureResource *>> SpriteBatch::upload() {
 		const auto &c = s.color;
 		auto z = t.position.z;
 		if (textures.size() == 0 || (textures.back().second != s.texture.get()))
-			textures.push_back(std::make_pair(i, s.texture.get()));
+			textures.emplace_back(i, s.texture.get());
 
 		/*glm::mat4 rot;
 		rot = glm::translate(rot, -glm::vec3(offsetPivot, 0));

@@ -59,6 +59,12 @@ public:
 		}
 	}
 
+	void handleEvent(WindowEvent &event) {
+		for (auto *s : systems_) {
+			s->handleEvent(event);
+		}
+	}
+
 	void render() {
 		for (auto *s : systems_) {
 			s->render();

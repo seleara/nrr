@@ -13,5 +13,5 @@ struct CameraComponent : public Component<CameraComponent> {
 	CameraMode mode = CameraMode::Free;
 	glm::vec3 target;
 
-	static CameraComponent *main;
+	static ComponentWrapper<CameraComponent> main;
 };

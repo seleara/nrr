@@ -8,7 +8,15 @@ void LevelSystem::update() {
 }
 
 void LevelSystem::fixedUpdate() {
-
+	forEach<Level>([&](Level &l) {
+		for (int y = 0; y < l.size.y; ++y) {
+			for (int x = 0; x < l.size.x; ++x) {
+				if (l.updateTile(x, y)) {
+					l.uploadTile(x, y);
+				}
+			}
+		}
+	});
 }
 
 void LevelSystem::render() {

@@ -37,6 +37,10 @@ class ConfigParser {
 public:
 	void parse(WadArchive &archive, const std::string &path);
 
+	bool exists(const std::string &path) const {
+		return valueExists(path);
+	}
+
 	template <typename T = const std::string &>
 	T get(const std::string &path) const {
 		const auto &value = getValue(path);
@@ -122,6 +126,35 @@ private:
 		return ret;
 	}
 
+	bool valueExists(const std::string &path) const {
+		std::string remaining = path;
+
+		// The paths used internally by the original rockraiders use "::" to separate blocks, so we need to replace all
+		// occurrences of "::" with "/".
+		auto doubleColon = remaining.find("::");
+		while (doubleColon != std::string::npos) {
+			remaining.replace(doubleColon, 2, "/");
+			doubleColon = remaining.find("::");
+		}
+		ConfigNode *current = root_.get();
+		while (remaining.size() > 0) {
+			auto slashPos = remaining.find('/');
+			auto next = remaining.substr(0, slashPos);
+			if (slashPos == std::string::npos) remaining = "";
+			else remaining.erase(0, slashPos + 1);
+			//std::cout << "Getting " << next << "..." << std::endl;
+			auto iter = ((ConfigBlock *)current)->children.find(next);
+			if (iter == ((ConfigBlock *)current)->children.cend()) {
+				return false;
+			}
+			current = iter->second.get();
+		}
+		if (current->type == ConfigNodeType::Value) {
+			return true;
+		}
+		return false;
+	}
+
 	const ConfigValue &getValue(const std::string &path) const {
 		std::string remaining = path;
 
@@ -139,7 +172,11 @@ private:
 			if (slashPos == std::string::npos) remaining = "";
 			else remaining.erase(0, slashPos + 1);
 			//std::cout << "Getting " << next << "..." << std::endl;
-			current = ((ConfigBlock *)current)->children[next].get();
+			auto iter = ((ConfigBlock *)current)->children.find(next);
+			if (iter == ((ConfigBlock *)current)->children.cend()) {
+				throw std::runtime_error("Couldn't find a value with the path \"" + path + "\".");
+			}
+			current = iter->second.get();
 		}
 		if (current->type == ConfigNodeType::Value) {
 			return *((ConfigValue *)current);

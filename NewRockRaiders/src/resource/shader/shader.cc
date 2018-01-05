@@ -56,16 +56,16 @@ std::string ShaderResource::preprocessShaderSource(const std::string &path) {
 		lastPos = ss.tellg();
 		std::getline(ss, line);
 		line = line.substr(0, line.find("//"));
-		StringUtil::trim(line);
-		if (line.length() == 0) continue;
-		if (line.find("#include") != 0) {
+		auto trimmed = StringUtil::trim(line);
+		if (trimmed.length() == 0) continue;
+		if (trimmed.find("#include") != 0) {
 			findingIncludes = false;
 			ss.seekg(lastPos);
 		} else {
-			auto quoteOpen = line.find('"');
-			auto quoteClose = line.rfind('"');
-			auto includePath = line.substr(quoteOpen + 1, quoteClose - quoteOpen - 1);
-			includes.push_back(includePath);
+			auto quoteOpen = trimmed.find('"');
+			auto quoteClose = trimmed.rfind('"');
+			auto includePath = trimmed.substr(quoteOpen + 1, quoteClose - quoteOpen - 1);
+			includes.push_back(std::string(includePath));
 		}
 	} while (findingIncludes);
 

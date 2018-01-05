@@ -127,9 +127,11 @@ private:
 
 class AnimatedEntityResource : public ModelResource {
 public:
+	void create(WadArchive &archive, const std::string &name) override;
 	void load(WadArchive &archive, const std::string &path) override;
 
 	ModelAnimation *loadAnimation(const std::string &animationName) override;
+	ModelAnimation *loadExternalAnimation(const std::string &path) override;
 	const std::string &name() const override;
 private:
 	WadArchive *archive_;

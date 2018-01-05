@@ -1,3 +1,3 @@
 #include <nrr/math/camera.h>
 
-CameraComponent *CameraComponent::main = nullptr;
+ComponentWrapper<CameraComponent> CameraComponent::main;

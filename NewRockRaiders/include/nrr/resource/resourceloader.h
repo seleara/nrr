@@ -10,6 +10,16 @@
 template <typename BaseType, typename GLType, typename VkType=GLType, typename DxType=GLType>
 class ResourceLoader {
 public:
+	static std::shared_ptr<BaseType> create(WadArchive &archive, const std::string &name) {
+		auto it = resources_.find(name);
+		if (it == resources_.end()) {
+			std::shared_ptr<GLType> resource = std::make_shared<GLType>();
+			resource->create(archive, name);
+			resources_.insert({ name, resource });
+			return resource;
+		}
+		return it->second;
+	}
 	static std::shared_ptr<BaseType> load(WadArchive &archive, std::string path) {
 		std::transform(path.begin(), path.end(), path.begin(), ::tolower);
 		auto it = resources_.find(path);

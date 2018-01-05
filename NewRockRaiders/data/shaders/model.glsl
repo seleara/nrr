@@ -73,7 +73,8 @@ void main() {
 	if (alpha < 0.5) discard;
 	if (pixelBlending) {
 		//if (outColor.r < 0.02 && outColor.g < 0.02 && outColor.b < 0.02) discard;
-		if (outColor == pixelBlendingColor) discard;
+		//if (outColor == pixelBlendingColor) discard;
+		//if (outColor.rgb == vec3(0, 0, 0)) discard;
 	}
 }
 

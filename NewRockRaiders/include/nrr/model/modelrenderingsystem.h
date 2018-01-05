@@ -7,7 +7,8 @@
 #include <nrr/math/uniformbuffer.h>
 #include <nrr/model/model.h>
 
-#include <glm/gtc/matrix_transform.hpp>>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 class ModelComponent : public Component<ModelComponent>, public ModelWrapper {
 public:
@@ -76,7 +77,9 @@ public:
 				auto &obj = anim->objects_[i];
 				if (obj.mesh) {
 					mvp->model = m.animation_.matrices_[i].matrix;
-					auto trans = glm::translate(glm::mat4(), t.position);
+					auto scale = glm::scale(glm::mat4(), t.scale);
+					auto rotate = glm::mat4_cast(t.rotation) * scale;
+					auto trans = glm::translate(rotate, t.position);
 					mvp->model = trans * mvp->model;
 					// Rotation and scale later
 					//UniformBuffer::updateUniformBuffer("mvp");

@@ -158,6 +158,10 @@ void AnimationWrapper::render() {
 	}
 }
 
+void ModelWrapper::create(WadArchive &archive, const std::string &name) {
+	resource_ = LightwaveModelLoader::create(archive, name);
+}
+
 void ModelWrapper::load(WadArchive &archive, const std::string &path) {
 	resource_ = LightwaveModelLoader::load(archive, path);
 	play("Activity_Stand");
@@ -180,4 +184,8 @@ void ModelWrapper::render() {
 
 void ModelWrapper::play(const std::string &animationName) {
 	animation_ = resource_->animation(animationName);
+}
+
+void ModelWrapper::playExternal(const std::string &path) {
+	animation_ = resource_->externalAnimation(path);
 }

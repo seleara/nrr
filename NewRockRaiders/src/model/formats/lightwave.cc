@@ -25,8 +25,8 @@ void LightwaveAnimation::load(WadArchive &archive, const std::string &path) {
 		auto commentPos = line.find(';');
 		if (commentPos != std::string::npos)
 			line.erase(commentPos);
-		StringUtil::trim(line);
-		auto tokens = StringUtil::splitRef(line);//StringUtil::split(line);
+		auto trimmed = std::string(StringUtil::trim(line));
+		auto tokens = StringUtil::splitRef(trimmed);//StringUtil::split(line);
 		if (tokens.size() == 0) continue;
 		//std::cout << tokens[0] << std::endl;
 		if (tokens[0] == "FramesPerSecond") {
@@ -107,7 +107,9 @@ void LightwaveAnimation::load(WadArchive &archive, const std::string &path) {
 				LightwaveKeyframe kf;
 				glm::vec3 angles;
 				stream >> kf.position.x >> kf.position.y >> kf.position.z >> angles.y >> angles.x >> angles.z >> kf.scale.x >> kf.scale.y >> kf.scale.z >> kf.frame >> (int &)kf.linearValue >> kf.splineAdjustments.x >> kf.splineAdjustments.y >> kf.splineAdjustments.z;
+
 				angles /= 180.0f / glm::pi<float>();
+				//kf.position.z = -kf.position.z;
 				/*kf.rotation = glm::rotate(kf.rotation, -angles.x, glm::vec3(1, 0, 0));
 				kf.rotation = glm::rotate(kf.rotation, angles.y, glm::vec3(0, 1, 0));
 				kf.rotation = glm::rotate(kf.rotation, -angles.z, glm::vec3(0, 0, 1));*/
@@ -205,7 +207,20 @@ LightwaveKeyframe LightwaveAnimation::interpolateFrames(const LightwaveKeyframe 
 	return kf;
 }
 
+void AnimatedEntityResource::create(WadArchive &archive, const std::string &name) {
+	archive_ = &archive;
+
+	folder_ = "";
+
+	name_ = name;
+}
+
 void AnimatedEntityResource::load(WadArchive &archive, const std::string &path) {
+	/*auto lowerPath = path;
+	std::transform(lowerPath.begin(), lowerPath.end(), lowerPath.begin(), ::tolower);
+	if (lowerPath.substr(lowerPath.size() - 3) != ".ae") {
+
+	}*/
 	ae_.parse(archive, path);
 
 	archive_ = &archive;
@@ -217,6 +232,19 @@ void AnimatedEntityResource::load(WadArchive &archive, const std::string &path) 
 		folder_ = path.substr(0, slashPos + 1);
 
 	//loadAnimation("Activity_Drill");
+}
+
+ModelAnimation *AnimatedEntityResource::loadExternalAnimation(const std::string &path) {
+	auto animationFile = folder_ + path;
+
+	auto anim = LightwaveAnimationLoader::load(*archive_, animationFile);
+
+	/*auto anim = std::make_unique<LightwaveAnimation>(this);
+	anim->load(*archive_, animationFile);*/
+
+	animations_.insert({ path, anim });
+
+	return anim.get();
 }
 
 ModelAnimation *AnimatedEntityResource::loadAnimation(const std::string &animationName) {

@@ -260,5 +260,8 @@
     <ClInclude Include="include\nrr\level\levelsystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\nrr\window\input.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

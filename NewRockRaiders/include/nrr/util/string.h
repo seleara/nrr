@@ -87,21 +87,38 @@ public:
 		return len;
 	}
 
-	static inline void trim(std::string &str) {
+	static inline void trimOld(std::string &str) {
 		ltrim(str);
 		rtrim(str);
 	}
 
-	static inline void ltrim(std::string &str) {
+	static inline std::string_view trim(std::string_view str) {
+		return rtrim(ltrim(str));
+	}
+
+	static inline void ltrimOld(std::string &str) {
 		str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](int c) {
 			return !std::isspace(c);
 		}));
 	}
 
-	static inline void rtrim(std::string &str) {
+	static inline std::string_view ltrim(std::string_view str) {
+		str.remove_prefix(std::min(str.find_first_not_of(" \t\r\n"), str.size()));
+		return str;
+	}
+
+	static inline void rtrimOld(std::string &str) {
 		str.erase(std::find_if(str.rbegin(), str.rend(), [](int c) {
 			return !std::isspace(c);
 		}).base(), str.end());
+	}
+
+	static inline std::string_view rtrim(std::string_view str) {
+		auto trimPos = str.find_last_not_of(" \t\r\n");
+		if (trimPos != str.npos) {
+			str.remove_suffix(str.size() - trimPos - 1);
+		}
+		return str;
 	}
 
 	static inline void toLower(std::string &str) {
@@ -115,6 +132,17 @@ public:
 		}
 		if (baseNamePos != std::string::npos) {
 			str.erase(0, baseNamePos + 1);
+		}
+		return str;
+	}
+
+	static inline std::string_view baseName(std::string_view str) {
+		auto baseNamePos = str.rfind('\\');
+		if (baseNamePos == std::string::npos) {
+			baseNamePos = str.rfind('/');
+		}
+		if (baseNamePos != str.npos) {
+			str = str.substr(baseNamePos + 1);
 		}
 		return str;
 	}

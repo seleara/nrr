@@ -2,6 +2,8 @@
 
 #include <nrr/window/gl/glwindow.h>
 
+Window *Window::main_ = nullptr;
+
 void WindowImpl::pushEvent(WindowEvent &&event) {
 	eventQueue_.push_back(std::move(event));
 }
@@ -22,7 +24,11 @@ bool Window::create(const std::string &title, uint32_t width, uint32_t height, G
 		ptr_ = new GLWindowImpl();
 		break;
 	}
-	return ptr_->create(title, width, height);
+	auto result = ptr_->create(title, width, height);
+	if (result) {
+		if (!main_) setMain();
+	}
+	return result;
 }
 
 bool Window::isOpen() const {
@@ -39,4 +45,8 @@ void Window::clear(const glm::vec4 &color) {
 
 void Window::swapBuffers() {
 	ptr_->swapBuffers();
+}
+
+void Window::update() {
+	ptr_->update();
 }

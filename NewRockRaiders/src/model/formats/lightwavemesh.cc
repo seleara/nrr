@@ -44,7 +44,7 @@ void LightwaveMesh::load(WadArchive &archive, const std::string &path) {
 
 	// Check if there is a UV file; if so, load texcoords from there instead of generating them
 	auto uvPath = path.substr(0, path.rfind('.')) + ".uv";
-	std::cout << uvPath << std::endl;
+	//std::cout << uvPath << std::endl;
 	if (archive.exists(uvPath)) {
 		loadExternalUV(archive, path, uvPath);
 	} else {
@@ -65,15 +65,15 @@ void LightwaveMesh::load(WadArchive &archive, const std::string &path) {
 	buffer_.upload(&points[0], points.size() * 5);
 	indexBuffer_.setType(VertexBufferType::Element);
 	size_t totalFaceSize = 0;// faces.size();
-	for (auto &vec : polygons) {
+	for (const auto &vec : polygons) {
 		totalFaceSize += vec.size();
 	}
 	indexBuffer_.allocate(totalFaceSize * 3);
 	size_t destOffset = 0;
-	for (int i = 0; i < polygons.size(); ++i) {
-		if (polygons[i].size() == 0) continue;
-		indexBuffer_.copy(&polygons[i][0][0], 0, polygons[i].size() * 3, destOffset);
-		destOffset += polygons[i].size() * 3;
+	for (const auto &poly : polygons) {
+		if (poly.size() == 0) continue;
+		indexBuffer_.copy(&poly[0][0], 0, poly.size() * 3, destOffset);
+		destOffset += poly.size() * 3;
 	}
 	//indexBuffer_.copy(&faces[0][0], 0, totalFaceSize, 0);
 	indexBuffer_.upload();
@@ -177,6 +177,7 @@ void LightwaveMesh::readSurface(int chunkSize, BinaryReader &br, WadArchive &arc
 	}
 	LightwaveSurface surf = {};
 	surf.name = name;
+	std::cout << surf.name << std::endl;
 	while (surfRead < chunkSize) {
 		auto subIdTag = br.readString(4);
 		auto subChunkSize = br.readBE<uint16_t>();
@@ -227,7 +228,7 @@ void LightwaveMesh::readSurface(int chunkSize, BinaryReader &br, WadArchive &arc
 			}
 			auto folder = StringUtil::folder(path);
 			auto pos = br.tellg();
-			//std::cout << "Texture Path = " << (folder + timg) << "\n";
+			std::cout << "Texture Path = " << (folder + timg) << "\n";
 			std::string sharedFolder = "world/shared/";
 			std::string folderPath(folder + timg);
 			std::string sharedFolderPath(sharedFolder + timg);
@@ -296,14 +297,14 @@ std::vector<glm::ivec3> LightwaveMesh::polygonToTriangles(const std::vector<int>
 	std::vector<glm::ivec3> tris;
 	tris.reserve(polygon.size() - 2);
 	if (polygon.size() == 3) {
-		tris.push_back(glm::ivec3(polygon[0], polygon[1], polygon[2]));
+		tris.emplace_back(polygon[0], polygon[1], polygon[2]);
 	} else if (polygon.size() == 4) { // Technically could be concave but assume it's not for now I guess
-		tris.push_back(glm::ivec3(polygon[0], polygon[1], polygon[2]));
-		tris.push_back(glm::ivec3(polygon[0], polygon[2], polygon[3]));
+		tris.emplace_back(polygon[0], polygon[1], polygon[2]);
+		tris.emplace_back(polygon[0], polygon[2], polygon[3]);
 	} else if (polygon.size() > 4) {
 		std::cerr << "Warning: Polygon might be concave, in which case this algorithm will fail.\n";
 		for (int i = 0; i < polygons.size() - 2; ++i) {
-			tris.push_back(glm::ivec3(polygon[0], polygon[i + 1], polygon[i + 2]));
+			tris.emplace_back(polygon[0], polygon[i + 1], polygon[i + 2]);
 		}
 	}
 	return tris;
@@ -330,9 +331,9 @@ void LightwaveMesh::loadExternalUV(WadArchive &archive, const std::string &path,
 	for (int i = 0; i < surfaces; ++i) {
 		std::string texturePath;
 		std::getline(uvStream, texturePath);
-		StringUtil::trim(texturePath);
-		texturePaths.push_back(texturePath);
-		texturePath = StringUtil::baseName(texturePath);
+		auto trimmedTexturePath = StringUtil::trim(texturePath);
+		texturePaths.push_back(std::string(trimmedTexturePath));
+		trimmedTexturePath = StringUtil::baseName(trimmedTexturePath);
 		auto folder = StringUtil::folder(path);
 		auto pos = uvStream.tellg();
 		//std::cout << "Texture Path = " << (folder + texturePath) << "\n";
@@ -341,13 +342,13 @@ void LightwaveMesh::loadExternalUV(WadArchive &archive, const std::string &path,
 		surf.ctex.flag |= 0x20;
 		//std::cout << "Texture Shared Path = " << (sharedFolder + texturePath) << "\n";
 		auto &texture = surf.ctex.textures.emplace_back();
-		if (archive.exists(folder + texturePath)) {
-			texture.load(archive, folder + texturePath);
-		} else if (archive.exists(sharedFolder + texturePath)) {
-			texture.load(archive, sharedFolder + texturePath);
+		if (archive.exists(folder + trimmedTexturePath)) {
+			texture.load(archive, folder + trimmedTexturePath);
+		} else if (archive.exists(sharedFolder + trimmedTexturePath)) {
+			texture.load(archive, sharedFolder + trimmedTexturePath);
 		} else {
 			// Not found
-			std::cerr << "Warning: Texture \"" << texturePath << "\" not found in LWO folder or world/shared/, creating dummy texture.\n";
+			std::cerr << "Warning: Texture \"" << trimmedTexturePath << "\" not found in LWO folder or world/shared/, creating dummy texture.\n";
 			texture.create(1, 1, nullptr);
 		}
 		uvStream.seekg(pos);
@@ -439,9 +440,9 @@ void LightwaveMesh::render(int sequenceFrame, Shader &shader, Texture &whiteText
 	int start = 0;
 	bool invalid = false, blending = false;
 
-	static const unsigned int colorLocation = 0; //shader.uniformLocation(colorLocationName);
-	static const unsigned int pixelBlendingLocation = 1; //shader.uniformLocation(pixelBlendingLocationName);
-	static const unsigned int pixelBlendingColorLocation = 2; //shader.uniformLocation(pixelBlendingColorLocationName);
+	constexpr unsigned int colorLocation = 0; //shader.uniformLocation(colorLocationName);
+	constexpr unsigned int pixelBlendingLocation = 1; //shader.uniformLocation(pixelBlendingLocationName);
+	constexpr unsigned int pixelBlendingColorLocation = 2; //shader.uniformLocation(pixelBlendingColorLocationName);
 
 	glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
 	//glUniform4fv(colorLocation, 1, &white[0]);
@@ -485,7 +486,7 @@ void LightwaveMesh::render(int sequenceFrame, Shader &shader, Texture &whiteText
 					//texture = &surf.ctex.textures[sequenceFrame % surf.ctex.textures.size()];
 					renderSettings.texture = surf.ctex.textures[sequenceFrame % surf.ctex.textures.size()].get();
 				}
-				if (surf.ctex.flag & 32 && !invalid) {
+				if (surf.ctex.flag & 32 && !renderSettings.invalid) {
 					renderSettings.pixelBlending = true;
 					/*if (!blending) {
 						glUniform1i(pixelBlendingLocation, true);
@@ -515,22 +516,18 @@ void LightwaveMesh::render(int sequenceFrame, Shader &shader, Texture &whiteText
 			lastRenderSettings = renderSettings;
 			continue;
 		}
+		lastRenderSettings = renderSettings;
 		lastRenderSettings.texture->bind();
 		if (!lastRenderSettings.invalid) {
-			//glUniform4fv(colorLocation, 1, &white[0]);
 			shader.setUniform(colorLocation, white);
 		} else {
-			//glUniform4fv(colorLocation, 1, &lastRenderSettings.color[0]);
 			shader.setUniform(colorLocation, lastRenderSettings.color);
 		}
 		if (lastRenderSettings.pixelBlending) {
-			//glUniform1i(pixelBlendingLocation, true);
 			shader.setUniform(pixelBlendingLocation, true);
 			auto colorKey = lastRenderSettings.texture->pixel(0, lastRenderSettings.texture->size().y - 1);
-			//glUniform4fv(pixelBlendingColorLocation, 1, &colorKey[0]);
 			shader.setUniform(pixelBlendingColorLocation, colorKey);
 		} else {
-			//glUniform1i(pixelBlendingLocation, false);
 			shader.setUniform(pixelBlendingLocation, false);
 		}
 		buffer_.draw(Primitives::Triangles, start, renderCount, indexBuffer_);
@@ -541,20 +538,18 @@ void LightwaveMesh::render(int sequenceFrame, Shader &shader, Texture &whiteText
 	if (renderCount > 0) {
 		lastRenderSettings.texture->bind();
 		if (!lastRenderSettings.invalid) {
-			//glUniform4fv(colorLocation, 1, &white[0]);
 			shader.setUniform(colorLocation, white);
 		} else {
-			//glUniform4fv(colorLocation, 1, &lastRenderSettings.color[0]);
 			shader.setUniform(colorLocation, lastRenderSettings.color);
 		}
 		if (lastRenderSettings.pixelBlending) {
-			//glUniform1i(pixelBlendingLocation, true);
-			shader.setUniform(pixelBlendingLocation, true);
+			//shader.setUniform(pixelBlendingLocation, true);
+			// TODO: Fix this. Basic color key transparency isn't decided by anything in the LWO file but instead by the prefix A###_ in the bmp file itself
+			// where ### is the index in the color palette.
+			shader.setUniform(pixelBlendingLocation, false);
 			auto colorKey = lastRenderSettings.texture->pixel(0, lastRenderSettings.texture->size().y - 1);
-			//glUniform4fv(pixelBlendingColorLocation, 1, &colorKey[0]);
 			shader.setUniform(pixelBlendingColorLocation, colorKey);
 		} else {
-			//glUniform1i(pixelBlendingLocation, false);
 			shader.setUniform(pixelBlendingLocation, false);
 		}
 		buffer_.draw(Primitives::Triangles, start, renderCount, indexBuffer_);

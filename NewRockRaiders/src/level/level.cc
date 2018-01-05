@@ -29,9 +29,11 @@ void Level::load(ConfigParser &config, WadArchive &archive, int level) {
 	for (int y = 0; y < size.y; ++y) {
 		for (int x = 0; x < size.x; ++x) {
 			auto val = terrain.get(x, y);
-			auto &tile = tiles[y * size.x + x];
+			std::cout << std::hex << (int)val;
+			auto &tile = tiles[(size.y - y - 1) * size.x + x];
 			switch (val) {
 			case 0:
+			case 5:
 				tile.wall = false;
 				tile.groundType = GroundType::Ground;
 				break;
@@ -48,7 +50,6 @@ void Level::load(ConfigParser &config, WadArchive &archive, int level) {
 				tile.wallType = WallType::LooseRock;
 				break;
 			case 4:
-			case 5:
 				tile.wall = true;
 				tile.wallType = WallType::Dirt;
 				break;
@@ -74,12 +75,42 @@ void Level::load(ConfigParser &config, WadArchive &archive, int level) {
 				break;
 			}
 		}
+		std::cout << "\n";
 	}
 
-	auto crorPath = config.get(levelBlock + "CryoreMap");
-	auto duggPath = config.get(levelBlock + "PredugMap");
-	auto highPath = config.get(levelBlock + "SurfaceMap");
-	auto tutoPath = config.get(levelBlock + "BlockPointersMap");
+	if (config.exists(levelBlock + "CryoreMap")) {
+		auto crorPath = config.get(levelBlock + "CryoreMap");
+	}
+
+	if (config.exists(levelBlock + "PredugMap")) {
+		auto duggPath = config.get(levelBlock + "PredugMap");
+		Map predug;
+		predug.load(archive, duggPath);
+		for (int y = 0; y < size.y; ++y) {
+			for (int x = 0; x < size.x; ++x) {
+				auto val = predug.get(x, y);
+				//std::cout << std::hex << (int)val;
+				auto &tile = tiles[(size.y - y - 1) * size.x + x];
+				tile.visible = (val == 2 || val == 4 ? false : true);
+			}
+		}
+	}
+
+	if (config.exists(levelBlock + "SurfaceMap")) {
+		auto highPath = config.get(levelBlock + "SurfaceMap");
+		Map surface;
+		surface.load(archive, highPath);
+		for (int y = 0; y < size.y; ++y) {
+			for (int x = 0; x < size.x; ++x) {
+				auto val = surface.get(x, y);
+				auto &tile = tiles[(size.y - y - 1) * size.x + x];
+				tile.height = (float)val * 20.0f / 6.0f;
+			}
+		}
+	}
+	if (config.exists(levelBlock + "BlockPointersMap")) {
+		auto tutoPath = config.get(levelBlock + "BlockPointersMap");
+	}
 
 	setup(archive);
 }
@@ -96,154 +127,45 @@ void Level::setup(WadArchive &archive) {
 		//atlas.add(archive, roofTexture, glm::ivec2(0, 0));
 		roofUnit = 0.06215f;
 	}
-	atlas.add(archive, roofTexture, glm::ivec2(0, 0));
+	int tx = 0, ty = 0;
+	auto nextPos = [&tx, &ty]() {
+		glm::ivec2 ret(tx, ty);
+		tx += 128;
+		if (tx >= 2048) {
+			ty += 128;
+			tx = 0;
+		}
+		return ret;
+	};
 
-	atlas.add(archive, textureBaseName + "00.bmp", glm::ivec2(128, 0));
-	atlas.add(archive, textureBaseName + "01.bmp", glm::ivec2(256, 0));
-	atlas.add(archive, textureBaseName + "02.bmp", glm::ivec2(384, 0));
-	atlas.add(archive, textureBaseName + "03.bmp", glm::ivec2(512, 0));
-	atlas.add(archive, textureBaseName + "04.bmp", glm::ivec2(640, 0));
-	atlas.add(archive, textureBaseName + "05.bmp", glm::ivec2(768, 0));
-	if (roofTexture != "World\\WorldTextures\\iceroof.bmp") {
-		atlas.add(archive, textureBaseName + "06.bmp", glm::ivec2(896, 0));
+	atlas.add(archive, roofTexture, nextPos());
+
+	bool iceRoof = (roofTexture == "World\\WorldTextures\\iceroof.bmp");
+
+	std::stringstream ss;
+	for (int i = 0; i <= 77; ++i) {
+		if ((i == 6 || i == 16 || i == 26 || i == 36) && iceRoof) {
+			nextPos();
+			continue;
+		}
+		if ((i >= 7 && i <= 9) || (i >= 14 && i <= 15) || (i >= 17 && i <= 19) || (i >= 27 && i <= 29) || (i >= 37 && i <= 39) ||
+			(i >= 41 && i <= 44) || (i >= 47 && i <= 50) || (i >= 56 && i <= 59) || (i >= 68 && i <= 69)) {
+			nextPos();
+			continue;
+		}
+		ss.str("");
+		ss << textureBaseName << std::setfill('0') << std::setw(2) << i << ".bmp";
+		atlas.add(archive, ss.str(), nextPos());
 	}
-	// 07 1024
-	// 08 1152
-	// 09 1280
-	atlas.add(archive, textureBaseName + "10.bmp", glm::ivec2(1408, 0));
-	atlas.add(archive, textureBaseName + "11.bmp", glm::ivec2(1536, 0));
-	atlas.add(archive, textureBaseName + "12.bmp", glm::ivec2(1664, 0));
-	atlas.add(archive, textureBaseName + "13.bmp", glm::ivec2(1792, 0));
-	// 14 1920
-	// 15 0
-	if (roofTexture != "World\\WorldTextures\\iceroof.bmp") {
-		atlas.add(archive, textureBaseName + "16.bmp", glm::ivec2(128, 128));
-	}
-	// 17 256
-	// 18 384
-	// 19 512
-	atlas.add(archive, textureBaseName + "20.bmp", glm::ivec2(640, 128));
-	atlas.add(archive, textureBaseName + "21.bmp", glm::ivec2(768, 128));
-	atlas.add(archive, textureBaseName + "22.bmp", glm::ivec2(896, 128));
-	atlas.add(archive, textureBaseName + "23.bmp", glm::ivec2(1024, 128));
-	atlas.add(archive, textureBaseName + "24.bmp", glm::ivec2(1152, 128));
-	atlas.add(archive, textureBaseName + "25.bmp", glm::ivec2(1280, 128));
-	if (roofTexture != "World\\WorldTextures\\iceroof.bmp") {
-		atlas.add(archive, textureBaseName + "26.bmp", glm::ivec2(1408, 128));
-	}
-	// 27 1536
-	// 28 1664
-	// 29 1792
-	atlas.add(archive, textureBaseName + "30.bmp", glm::ivec2(1920, 128));
-	atlas.add(archive, textureBaseName + "31.bmp", glm::ivec2(0, 256));
-	atlas.add(archive, textureBaseName + "32.bmp", glm::ivec2(128, 256));
-	atlas.add(archive, textureBaseName + "33.bmp", glm::ivec2(256, 256));
-	atlas.add(archive, textureBaseName + "34.bmp", glm::ivec2(384, 256));
-	atlas.add(archive, textureBaseName + "35.bmp", glm::ivec2(512, 256));
-	if (roofTexture != "World\\WorldTextures\\iceroof.bmp") {
-		atlas.add(archive, textureBaseName + "36.bmp", glm::ivec2(640, 256));
-	}
-	// 37 768
-	// 38 896
-	// 39 1024
-	atlas.add(archive, textureBaseName + "40.bmp", glm::ivec2(1152, 256));
-	// 41 1280
-	// 42 1408
-	// 43 1536
-	// 44 1664
-	atlas.add(archive, textureBaseName + "45.bmp", glm::ivec2(1792, 256));
-	atlas.add(archive, textureBaseName + "46.bmp", glm::ivec2(1920, 256));
-	// 47 0
-	// 48 128
-	// 49 256
-	// 50 384
-	atlas.add(archive, textureBaseName + "51.bmp", glm::ivec2(512, 384));
-	atlas.add(archive, textureBaseName + "52.bmp", glm::ivec2(640, 384));
-	atlas.add(archive, textureBaseName + "53.bmp", glm::ivec2(768, 384));
-	atlas.add(archive, textureBaseName + "54.bmp", glm::ivec2(896, 384));
-	atlas.add(archive, textureBaseName + "55.bmp", glm::ivec2(1024, 384));
-	// 56 1152
-	// 57 1280
-	// 58 1408
-	// 59 1536
-	atlas.add(archive, textureBaseName + "60.bmp", glm::ivec2(1664, 384));
-	atlas.add(archive, textureBaseName + "61.bmp", glm::ivec2(1792, 384));
-	atlas.add(archive, textureBaseName + "62.bmp", glm::ivec2(1920, 384));
-	atlas.add(archive, textureBaseName + "63.bmp", glm::ivec2(0, 512));
-	atlas.add(archive, textureBaseName + "64.bmp", glm::ivec2(128, 512));
-	atlas.add(archive, textureBaseName + "65.bmp", glm::ivec2(256, 512));
-	atlas.add(archive, textureBaseName + "66.bmp", glm::ivec2(384, 512));
-	atlas.add(archive, textureBaseName + "67.bmp", glm::ivec2(512, 512));
-	// 68 640
-	// 69 768
-	atlas.add(archive, textureBaseName + "70.bmp", glm::ivec2(896, 512));
-	atlas.add(archive, textureBaseName + "71.bmp", glm::ivec2(1024, 512));
-	atlas.add(archive, textureBaseName + "72.bmp", glm::ivec2(1152, 512));
-	atlas.add(archive, textureBaseName + "73.bmp", glm::ivec2(1280, 512));
-	atlas.add(archive, textureBaseName + "74.bmp", glm::ivec2(1408, 512));
-	atlas.add(archive, textureBaseName + "75.bmp", glm::ivec2(1536, 512));
-	atlas.add(archive, textureBaseName + "76.bmp", glm::ivec2(1664, 512));
-	atlas.add(archive, textureBaseName + "77.bmp", glm::ivec2(1792, 512));
 
 	vertices.resize(size.x * size.y * 6);
 	for (int y = 0; y < size.y; ++y) {
 		for (int x = 0; x < size.x; ++x) {
-			auto &t = tiles[y * size.x + x];
-			int walls = 0;
-			int i = 0;
-			for (int yy = -1; yy < 2; ++yy) {
-				for (int xx = -1; xx < 2; ++xx) {
-					auto *neighbor = tile(x + xx, y + yy);
-					if (neighbor == nullptr || neighbor->wall) {
-						walls |= (1 << i);
-					}
-					++i;
-				}
-			}
-			if (t.wall) {
-				if ((bitCount(walls) < 3)) {
-					t.wall = false;
-					t.groundType = GroundType::Ground;
-					t.rubble = 1.0f;
-				} else {
-					auto index = (y * size.x + x) * 6;
-					vertices[index + 0].position = glm::vec3(x, 1, y) * blockSize;
-					vertices[index + 1].position = glm::vec3(x + 1, 1, y) * blockSize;
-					vertices[index + 2].position = glm::vec3(x + 1, 1, y - 1) * blockSize;
-					vertices[index + 3].position = glm::vec3(x + 1, 1, y - 1) * blockSize;
-					vertices[index + 4].position = glm::vec3(x, 1, y - 1) * blockSize;
-					vertices[index + 5].position = glm::vec3(x, 1, y) * blockSize;
-
-					setUVs(&vertices[index], 0);
-					/*vertices[index + 0].uv = glm::vec2(0.0f, 0.0f);
-					vertices[index + 1].uv = glm::vec2(0.0625f, 0.0f);
-					vertices[index + 2].uv = glm::vec2(0.0625f, 0.0625f);
-					vertices[index + 3].uv = glm::vec2(0.0625f, 0.0625f);
-					vertices[index + 4].uv = glm::vec2(0.0f, 0.0625f);
-					vertices[index + 5].uv = glm::vec2(0.0f, 0.0f);*/
-				}
-			}
-			if (!t.wall) {
-				auto index = (y * size.x + x) * 6;
-				vertices[index + 0].position = glm::vec3(x, 0, y) * blockSize;
-				vertices[index + 1].position = glm::vec3(x + 1, 0, y) * blockSize;
-				vertices[index + 2].position = glm::vec3(x + 1, 0, y - 1) * blockSize;
-				vertices[index + 3].position = glm::vec3(x + 1, 0, y - 1) * blockSize;
-				vertices[index + 4].position = glm::vec3(x, 0, y - 1) * blockSize;
-				vertices[index + 5].position = glm::vec3(x, 0, y) * blockSize;
-
-				setUVs(&vertices[index], 1);
-				/*vertices[index + 0].uv = glm::vec2(0.0f, 0.0f);
-				vertices[index + 1].uv = glm::vec2(0.0625f, 0.0f);
-				vertices[index + 2].uv = glm::vec2(0.0625f, 0.0625f);
-				vertices[index + 3].uv = glm::vec2(0.0625f, 0.0625f);
-				vertices[index + 4].uv = glm::vec2(0.0f, 0.0625f);
-				vertices[index + 5].uv = glm::vec2(0.0f, 0.0f);*/
-			}
+			updateTile(x, y);
 		}
 	}
 
-	buffer.upload(vertices.data(), vertices.size() * sizeof(LevelVertex) / sizeof(float));
+	uploadTiles();
 
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
@@ -253,4 +175,201 @@ void Level::setup(WadArchive &archive) {
 	buffer.setAttribute(1, 2, stride, 3);
 	buffer.setAttribute(2, 4, stride, 5);
 	glBindVertexArray(0);
+}
+
+bool Level::updateTile(int x, int y) {
+	auto &t = tiles[y * size.x + x];
+	int walls = 0;
+	int i = 0;
+
+	Tile prevT = t;
+
+	// Create a bitmask that tells us which surrounding tiles are walls at a glance
+	for (int yy = -1; yy < 2; ++yy) {
+		for (int xx = -1; xx < 2; ++xx) {
+			if (yy == 0 && xx == 0) continue;
+			auto *neighbor = tile(x + xx, y - yy);
+			if (neighbor == nullptr || neighbor->wall || !neighbor->visible) {
+				walls |= (1 << i);
+			}
+			++i;
+		}
+	}
+	if (t.wall) {
+		int texAdd = (int)t.wallType;
+		if ((bitCount(walls) < 3)) {
+			t.wallOrientation = WallOrientation::Invalid;
+		} else {
+			auto index = (y * size.x + x) * 6;
+			if (wallMask(walls, "########")) { // All surrounding walls are walls
+				t.wallOrientation = WallOrientation::Roof;
+
+				// Edge walls
+			} else if (wallMask(walls, "## #. . ")) { // SE edge wall
+				t.wallOrientation = WallOrientation::EdgeSE;
+			} else if (wallMask(walls, " ##.# . ")) { // SW edge wall
+				t.wallOrientation = WallOrientation::EdgeSW;
+			} else if (wallMask(walls, " . .# ##")) { // NW edge wall
+				t.wallOrientation = WallOrientation::EdgeNW;
+			} else if (wallMask(walls, " . #.## ")) { // NE edge wall
+				t.wallOrientation = WallOrientation::EdgeNE;
+
+				// Corner walls
+			} else if (wallMask(walls, "## ## #.")) { // SE corner wall
+				t.wallOrientation = WallOrientation::CornerSE;
+			} else if (wallMask(walls, " ####.# ")) { // SW corner wall
+				t.wallOrientation = WallOrientation::CornerSW;
+			} else if (wallMask(walls, ".# ## ##")) { // NW corner wall
+				t.wallOrientation = WallOrientation::CornerNW;
+			} else if (wallMask(walls, " #.#### ")) { // NE corner wall
+				t.wallOrientation = WallOrientation::CornerNE;
+
+				// Straight walls
+			} else if (wallMask(walls, " # ## . ")) { // S wall
+				t.wallOrientation = WallOrientation::StraightS;
+			} else if (wallMask(walls, " # .# # ")) { // W wall
+				t.wallOrientation = WallOrientation::StraightW;
+			} else if (wallMask(walls, " . ## # ")) { // N wall
+				t.wallOrientation = WallOrientation::StraightN;
+			} else if (wallMask(walls, " # #. # ")) { // E wall
+				t.wallOrientation = WallOrientation::StraightE;
+
+				// Weird inbetween walls
+			} else if (wallMask(walls, ".######.")) { // <0> wall
+				t.wallOrientation = WallOrientation::Inbetween0;
+			} else if (wallMask(walls, "##.##.##")) { // <1> wall
+				t.wallOrientation = WallOrientation::Inbetween1;
+
+				// Unknown
+			} else {
+				t.wallOrientation = WallOrientation::Invalid;
+			}
+		}
+		if (t.wallOrientation == WallOrientation::Invalid) {
+			t.wall = false;
+			t.rubble = 1.0f;
+			t.groundType = GroundType::Ground;
+			t.pathType = PathType::Rubble;
+		}
+	}
+	t.initialized = true;
+	if (prevT != t) {
+		updateTileVertices(x, y);
+		return true;
+	}
+	return false;
+}
+
+void Level::updateTileVertices(int x, int y) {
+	auto &t = tiles[y * size.x + x];
+
+	TileHeights th;
+	th.topLeft = t.height;
+	if (x < size.x - 1) {
+		th.topRight = tiles[y * size.x + x + 1].height;
+		if (y > 0) {
+			th.bottomRight = tiles[(y - 1) * size.x + x + 1].height;
+		}
+	} else {
+		th.topRight = th.topLeft;
+		th.bottomRight = th.topLeft;
+	}
+	if (y > 0) {
+		th.bottomLeft = tiles[(y - 1) * size.x + x].height;
+	} else {
+		th.bottomLeft = th.topLeft;
+	}
+
+	if (t.wall) {
+		int texAdd = (int)t.wallType;
+		auto index = (y * size.x + x) * 6;
+		if (t.wallOrientation == WallOrientation::Roof) { // All surrounding walls are walls
+			setPoints<0>(&vertices[index], x, y, { 1, 1, 1, 1 }, th);
+			setUVs<0>(&vertices[index], 0);
+
+			// Edge walls
+		} else if (t.wallOrientation == WallOrientation::EdgeSE) { // SE edge wall
+			setPoints<0>(&vertices[index], x, y, { 1, 0, 0, 0 }, th);
+			setUVs<0>(&vertices[index], 53 + texAdd);
+		} else if (t.wallOrientation == WallOrientation::EdgeSW) { // SW edge wall
+			setPoints<1>(&vertices[index], x, y, { 0, 1, 0, 0 }, th);
+			setUVs<2>(&vertices[index], 53 + texAdd);
+		} else if (t.wallOrientation == WallOrientation::EdgeNW) { // NW edge wall
+			setPoints<0>(&vertices[index], x, y, { 0, 0, 1, 0 }, th);
+			setUVs<2>(&vertices[index], 53 + texAdd);
+		} else if (t.wallOrientation == WallOrientation::EdgeNE) { // NE edge wall
+			setPoints<1>(&vertices[index], x, y, { 0, 0, 0, 1 }, th);
+			setUVs<0>(&vertices[index], 53 + texAdd);
+
+			// Corner walls
+		} else if (t.wallOrientation == WallOrientation::CornerSE) { // SE corner wall
+			setPoints<0>(&vertices[index], x, y, { 1, 1, 0, 1 }, th);
+			setUVs<0>(&vertices[index], 33 + texAdd);
+		} else if (t.wallOrientation == WallOrientation::CornerSW) { // SW corner wall
+			setPoints<1>(&vertices[index], x, y, { 1, 1, 1, 0 }, th);
+			setUVs<2>(&vertices[index], 33 + texAdd);
+		} else if (t.wallOrientation == WallOrientation::CornerNW) { // NW corner wall
+			setPoints<0>(&vertices[index], x, y, { 0, 1, 1, 1 }, th);
+			setUVs<2>(&vertices[index], 33 + texAdd);
+		} else if (t.wallOrientation == WallOrientation::CornerNE) { // NE corner wall
+			setPoints<1>(&vertices[index], x, y, { 1, 0, 1, 1 }, th);
+			setUVs<0>(&vertices[index], 33 + texAdd);
+
+			// Straight walls
+		} else if (t.wallOrientation == WallOrientation::StraightS) { // S wall
+			setPoints<0>(&vertices[index], x, y, { 1, 1, 0, 0 }, th);
+			setUVs<0>(&vertices[index], 3 + texAdd);
+		} else if (t.wallOrientation == WallOrientation::StraightW) { // W wall
+			setPoints<0>(&vertices[index], x, y, { 0, 1, 1, 0 }, th);
+			setUVs<1>(&vertices[index], 3 + texAdd);
+		} else if (t.wallOrientation == WallOrientation::StraightN) { // N wall
+			setPoints<0>(&vertices[index], x, y, { 0, 0, 1, 1 }, th);
+			setUVs<2>(&vertices[index], 3 + texAdd);
+		} else if (t.wallOrientation == WallOrientation::StraightE) { // E wall
+			setPoints<0>(&vertices[index], x, y, { 1, 0, 0, 1 }, th);
+			setUVs<3>(&vertices[index], 3 + texAdd);
+
+			// Weird inbetween walls
+		} else if (t.wallOrientation == WallOrientation::Inbetween0) { // <0> wall
+			setPoints<0>(&vertices[index], x, y, { 0, 1, 0, 1 }, th);
+			setUVs<0>(&vertices[index], 3 + texAdd);
+		} else if (t.wallOrientation == WallOrientation::Inbetween1) { // <1> wall
+			setPoints<1>(&vertices[index], x, y, { 1, 0, 1, 0 }, th);
+			setUVs<0>(&vertices[index], 3 + texAdd);
+
+			// Unknown/Invalid
+		} else {
+			setPoints<0>(&vertices[index], x, y, { 0, 0, 0, 0 }, th);
+			setUVs<0>(&vertices[index], 0);
+		}
+	}
+
+	if (!t.wall) {
+		auto index = (y * size.x + x) * 6;
+		setPoints<0>(&vertices[index], x, y, { 0, 0, 0, 0 }, th);
+		switch (t.groundType) {
+		case GroundType::Water:
+			setUVs<0>(&vertices[index], 46);
+			break;
+		case GroundType::Lava:
+			setUVs<0>(&vertices[index], 47);
+			break;
+		default:
+			setUVs<0>(&vertices[index], 1);
+			break;
+		}
+
+		if (!t.visible) {
+			setColor(&vertices[index], glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+		}
+	}
+}
+
+void Level::uploadTiles() {
+	buffer.upload(vertices.data(), vertices.size() * sizeof(LevelVertex) / sizeof(float));
+}
+
+void Level::uploadTile(int x, int y) {
+	auto index = (y * size.x + x) * 6;
+	buffer.uploadPart(vertices.data(), index, sizeof(LevelVertex) / sizeof(float));
 }

@@ -19,19 +19,23 @@ void ConfigParser::parse(WadArchive &archive, const std::string &path) {
 
 	while (stream.good() && stream.tellg() < end) {
 		std::getline(stream, line);
-		StringUtil::trim(line);
-		auto commentPos = line.find(';');
-		if (commentPos != std::string::npos) line.erase(commentPos, std::string::npos);
-		if (line == "") continue;
+		auto trimmed = StringUtil::trim(line);
+		auto commentPos = trimmed.find(';');
+		if (commentPos != std::string::npos) {
+			//line.erase(commentPos, std::string::npos);
+			trimmed = trimmed.substr(0, commentPos);
+		}
+		if (trimmed == "") continue;
 
-		auto openBlockPos = line.find('{');
+		auto openBlockPos = trimmed.find('{');
 		if (openBlockPos != std::string::npos) {
-			line.erase(openBlockPos, std::string::npos);
-			StringUtil::rtrim(line);
+			//line.erase(openBlockPos, std::string::npos);
+			trimmed = trimmed.substr(0, openBlockPos);
+			trimmed = StringUtil::rtrim(trimmed);
 			auto next = std::make_unique<ConfigBlock>();
 			std::string id;
-			if (line != "") {
-				id = line;
+			if (trimmed != "") {
+				id = trimmed;
 			} else {
 				id = lastLineWithText;
 			}
@@ -51,14 +55,16 @@ void ConfigParser::parse(WadArchive &archive, const std::string &path) {
 			continue;
 		}
 
-		auto closeBlockPos = line.find('}');
+		auto closeBlockPos = trimmed.find('}');
 		if (closeBlockPos != std::string::npos) {
-			line.erase(closeBlockPos, std::string::npos);
-			StringUtil::rtrim(line);
+			//line.erase(closeBlockPos, std::string::npos);
+			trimmed = trimmed.substr(0, closeBlockPos);
+			trimmed = StringUtil::rtrim(trimmed);
 		}
 
-		if (line != "") {
-			auto tokens = StringUtil::splitRef(line);
+		if (trimmed != "") {
+			auto trimmedStr = std::string(trimmed);
+			auto tokens = StringUtil::splitRef(trimmedStr);
 			if (tokens.size() == 2) {
 				auto value = std::make_unique<ConfigValue>();
 				value->id = tokens[0];
@@ -87,7 +93,7 @@ void ConfigParser::parse(WadArchive &archive, const std::string &path) {
 #endif
 		}
 
-		lastLineWithText = line;
+		lastLineWithText = trimmed;
 
 		//std::cout << line << std::endl;
 		//std::cin.get();

@@ -87,12 +87,21 @@ public:
 		AnimationWrapper anim(iter->second.get());
 		return anim;
 	}
+	AnimationWrapper externalAnimation(const std::string &path) {
+		auto iter = animations_.find(path);
+		if (iter == animations_.end()) {
+			return AnimationWrapper(loadExternalAnimation(path));
+		}
+		AnimationWrapper anim(iter->second.get());
+		return anim;
+	}
 
 	void fixedUpdate();
 	void update();
 	void render();
 
 	virtual ModelAnimation *loadAnimation(const std::string &animationName) = 0;
+	virtual ModelAnimation *loadExternalAnimation(const std::string &path) = 0;
 	virtual const std::string &name() const = 0;
 protected:
 	friend class ModelMesh;
@@ -103,11 +112,13 @@ protected:
 
 class ModelWrapper {
 public:
+	void create(WadArchive &archive, const std::string &name);
 	void load(WadArchive &archive, const std::string &path);
 	void fixedUpdate();
 	void update();
 	void render();
 	void play(const std::string &animationName);
+	void playExternal(const std::string &path);
 protected:
 	friend class ModelRenderingSystem;
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <nrr/ecs/components/basecomponent.h>
+#include <nrr/ecs/entities/entity.h>
 
 template <typename C>
 struct Component : public BaseComponent {
@@ -15,7 +16,19 @@ class EntityManager;
 template <typename C>
 class ComponentWrapper {
 public:
+	ComponentWrapper() : manager_(nullptr), id_(0) {}
 	ComponentWrapper(EntityManager *manager, EntityID id) : manager_(manager), id_(id) {}
+	ComponentWrapper(const ComponentWrapper &other) : manager_(other.manager_), id_(other.id_) {}
+	ComponentWrapper(ComponentWrapper &&other) : manager_(std::move(other.manager_)), id_(std::move(other.id_)) {}
+	ComponentWrapper &operator=(const ComponentWrapper &other) {
+		manager_ = other.manager_;
+		id_ = other.id_;
+		return *this;
+	}
+
+	Entity entity() const {
+		return manager_->wrap(id_);
+	}
 
 	C *ptr();
 	const C *ptr() const;
