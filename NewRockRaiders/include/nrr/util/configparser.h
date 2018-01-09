@@ -128,6 +128,7 @@ private:
 
 	bool valueExists(const std::string &path) const {
 		std::string remaining = path;
+		StringUtil::toLower(remaining);
 
 		// The paths used internally by the original rockraiders use "::" to separate blocks, so we need to replace all
 		// occurrences of "::" with "/".
@@ -149,14 +150,15 @@ private:
 			}
 			current = iter->second.get();
 		}
-		if (current->type == ConfigNodeType::Value) {
+		/*if (current->type == ConfigNodeType::Value) {
 			return true;
-		}
-		return false;
+		}*/
+		return true;
 	}
 
 	const ConfigValue &getValue(const std::string &path) const {
 		std::string remaining = path;
+		StringUtil::toLower(remaining);
 
 		// The paths used internally by the original rockraiders use "::" to separate blocks, so we need to replace all
 		// occurrences of "::" with "/".
@@ -172,8 +174,9 @@ private:
 			if (slashPos == std::string::npos) remaining = "";
 			else remaining.erase(0, slashPos + 1);
 			//std::cout << "Getting " << next << "..." << std::endl;
-			auto iter = ((ConfigBlock *)current)->children.find(next);
-			if (iter == ((ConfigBlock *)current)->children.cend()) {
+			auto *block = ((ConfigBlock *)current);
+			auto iter = block->children.find(next);
+			if (iter == block->children.cend()) {
 				throw std::runtime_error("Couldn't find a value with the path \"" + path + "\".");
 			}
 			current = iter->second.get();

@@ -7,8 +7,11 @@
 #include <nrr/level/map.h>
 #include <nrr/util/binaryreader.h>
 #include <nrr/util/configparser.h>
+#include <nrr/math/camera.h>
+#include <nrr/math/transform.h>
+#include <nrr/units/unitinfo.h>
 
-void Level::load(ConfigParser &config, WadArchive &archive, int level) {
+void Level::load(EntityManager &em, ConfigParser &config, WadArchive &archive, int level) {
 	std::stringstream ss;
 	ss << "Lego*/Levels/Level" << std::setfill('0') << std::setw(2) << level << "/";
 	auto levelBlock = ss.str();
@@ -108,8 +111,38 @@ void Level::load(ConfigParser &config, WadArchive &archive, int level) {
 			}
 		}
 	}
+
 	if (config.exists(levelBlock + "BlockPointersMap")) {
 		auto tutoPath = config.get(levelBlock + "BlockPointersMap");
+	}
+
+	if (config.exists(levelBlock + "OListFile")) {
+		auto olPath = config.get(levelBlock + "OListFile");
+		ConfigParser ol;
+		ol.parse(archive, olPath);
+
+		std::stringstream ss;
+		for (int i = 1;; ++i) {
+			ss << "Lego*/Object" << i;
+			auto objPath = ss.str();
+			ss.str("");
+			if (ol.exists(objPath)) {
+				auto type = ol.get(objPath + "/type");
+				auto xPos = ol.get<float>(objPath + "/xPos");
+				auto yPos = ol.get<float>(objPath + "/yPos");
+				if (type == "TVCamera") {
+					auto &pos = CameraComponent::main.entity().get<TransformComponent>()->position;
+					pos.x = xPos * blockSize;
+					pos.z = yPos * blockSize;
+				} else {
+					auto unit = UnitFactory::create(em, type);
+					unit.get<TransformComponent>()->position = glm::vec3(xPos * blockSize, 60, yPos * blockSize);
+					unit.get<ModelComponent>()->play("Activity_Stand");
+				}
+			} else {
+				break;
+			}
+		}
 	}
 
 	setup(archive);
@@ -253,7 +286,8 @@ bool Level::updateTile(int x, int y) {
 		}
 	}
 	t.initialized = true;
-	if (prevT != t) {
+	if (prevT != t || t.dirty) {
+		t.dirty = false;
 		updateTileVertices(x, y);
 		return true;
 	}
@@ -262,6 +296,7 @@ bool Level::updateTile(int x, int y) {
 
 void Level::updateTileVertices(int x, int y) {
 	auto &t = tiles[y * size.x + x];
+	auto index = (y * size.x + x) * 6;
 
 	TileHeights th;
 	th.topLeft = t.height;
@@ -282,7 +317,6 @@ void Level::updateTileVertices(int x, int y) {
 
 	if (t.wall) {
 		int texAdd = (int)t.wallType;
-		auto index = (y * size.x + x) * 6;
 		if (t.wallOrientation == WallOrientation::Roof) { // All surrounding walls are walls
 			setPoints<0>(&vertices[index], x, y, { 1, 1, 1, 1 }, th);
 			setUVs<0>(&vertices[index], 0);
@@ -345,7 +379,6 @@ void Level::updateTileVertices(int x, int y) {
 	}
 
 	if (!t.wall) {
-		auto index = (y * size.x + x) * 6;
 		setPoints<0>(&vertices[index], x, y, { 0, 0, 0, 0 }, th);
 		switch (t.groundType) {
 		case GroundType::Water:
@@ -363,6 +396,8 @@ void Level::updateTileVertices(int x, int y) {
 			setColor(&vertices[index], glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 		}
 	}
+
+	setColor(&vertices[index], t.highlightColor);
 }
 
 void Level::uploadTiles() {

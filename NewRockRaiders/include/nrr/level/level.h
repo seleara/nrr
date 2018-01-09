@@ -67,6 +67,10 @@ struct Tile {
 	float rubble;
 	float height;
 
+	glm::vec4 highlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	bool dirty = true;
+
 	bool operator==(const Tile &other) const {
 		bool ret = initialized == other.initialized;
 		ret &= visible == other.visible;
@@ -84,6 +88,7 @@ struct Tile {
 		ret &= pathType == other.pathType;
 		ret &= rubble == other.rubble;
 		ret &= height == other.height;
+		ret &= highlightColor == other.highlightColor;
 		return ret;
 	}
 
@@ -105,8 +110,19 @@ struct LevelVertex {
 	glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 };
 
+struct Selection {
+	enum class Type {
+		Tile,
+		Raider,
+		Vehicle,
+		Building,
+	};
+
+	Tile *selectedTile;
+};
+
 struct Level : public Component<Level> {
-	void load(ConfigParser &config, WadArchive &archive, int level);
+	void load(EntityManager &em, ConfigParser &config, WadArchive &archive, int level);
 	Tile *tile(int x, int y) {
 		if (x >= 0 && x < size.x && y >= 0 && y < size.y) return &tiles[y * size.x + x];
 		return nullptr;
@@ -118,6 +134,8 @@ struct Level : public Component<Level> {
 	GLuint vao;
 	std::vector<LevelVertex> vertices;
 	Texture atlas;
+
+	Selection selection;
 	
 	// Texture Definitions
 	float roofUnit;

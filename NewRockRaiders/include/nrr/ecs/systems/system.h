@@ -23,6 +23,16 @@ protected:
 		}
 	}
 
+	template <typename ... Args>
+	void one(std::function<void(Args & ...)> func) {
+		std::set<EntityID> finalSet = allWith<Args...>();
+		for (auto id : finalSet) {
+			//buildFunction<Args...>(func, id);
+			func(*(manager_->getPointer<Args>(id))...);
+			break;
+		}
+	}
+
 	template <typename C>
 	void buildFunction(std::function<void(C &)> func, EntityID id) {
 		func(manager_->get<C>(id).get());

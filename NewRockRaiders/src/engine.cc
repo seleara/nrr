@@ -25,6 +25,8 @@
 
 #include <nrr/model/model.h>
 
+#include <nrr/units/unitinfo.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -59,7 +61,9 @@ int Engine::run() {
 	std::cout << "Lego*/Main/FPLightRGB = " << col.x << ", " << col.y << ", " << col.z << std::endl;
 	std::cout << "Lego*/Main/FPLightRGB = " << col2.x << ", " << col2.y << ", " << col2.z << std::endl;
 
-	auto raider1 = em_.create();
+	if (!setupUnits(cfg)) return -1;
+
+	/*auto raider1 = em_.create();
 	//auto raider2 = em_.create();
 	raider1.add<TransformComponent>()->position = glm::vec3(4, 0, 0);
 	//raider2.add<TransformComponent>()->position = glm::vec3(-4, 0, 0);
@@ -70,26 +74,39 @@ int Engine::run() {
 	model->load(archive_, "mini-figures/pilot/pilot.ae");
 	model->play("Activity_Drill");
 	//model2->load(archive, "mini-figures/pilot/pilot.ae");
-	//model2->play("Activity_Eat");
+	//model2->play("Activity_Eat");*/
+
+	auto raider = UnitFactory::create(em_, "Pilot");
+	raider.get<TransformComponent>()->position = glm::vec3(4, 0, 0);
+	raider.get<ModelComponent>()->play("Activity_Drill");
+
+	auto rm = UnitFactory::create(em_, "RockMonster");
+	rm.get<TransformComponent>()->position = glm::vec3(20, 0, 0);
+	rm.get<ModelComponent>()->play("Activity_Route");
+
+	auto slug = UnitFactory::create(em_, "Slug");
+	slug.get<TransformComponent>()->position = glm::vec3(40, 0, 0);
+	slug.get<ModelComponent>()->play("Activity_Route");
 
 	auto captain = em_.create();
 	auto capT = captain.add<TransformComponent>();
 	capT->position = glm::vec3(0, 0, 0);
 	capT->scale = glm::vec3(10, 10, 10);
-	capT->rotation = glm::angleAxis(3.1415f, glm::vec3(1, 0, 0)) * glm::angleAxis(1.58f, glm::vec3(1, 0, 0));
+	//capT->rotation = glm::angleAxis(3.1415f, glm::vec3(1, 0, 0)) * glm::angleAxis(1.58f, glm::vec3(1, 0, 0));
 	auto capModel = captain.add<ModelComponent>();
 	capModel->create(archive_, "Captain");
 	capModel->playExternal("mini-figures/captain/new_captain_point_talking.lws");
 
 	auto level = em_.create();
-	level.add<Level>()->load(cfg, archive_, 1);
+	level.add<Level>()->load(em_, cfg, archive_, 1);
 
-	//auto barracks = em_.create();
-	//barracks.add<TransformComponent>()->position = glm::vec3(-20, 0, 0);
-	//auto barracksModel = barracks.add<ModelComponent>(archive, "buildings/toolstation/toolstation.ae", "Activity_Stand");
-	//barracksModel->load(archive, "buildings/barracks/barracks.ae");
-	//barracksModel->load(archive, "vehicles/lmlp/lmlp.ae");
-	//barracksModel->play("Activity_Stand");
+	auto barracks = em_.create();
+	barracks.add<TransformComponent>()->position = glm::vec3(460, 40, 420);
+	auto barracksModel = barracks.add<ModelComponent>(); // (archive_, "buildings/toolstation/toolstation.ae", "Activity_Stand");
+	barracksModel->load(archive_, "buildings/toolstation/toolstation.ae");
+	//barracksModel->load(archive_, "buildings/barracks/barracks.ae");
+	//barracksModel->load(archive_, "vehicles/lmlp/lmlp.ae");
+	barracksModel->play("Activity_Teleport");
 
 	/*for (int i = 0; i < 20; ++i) {
 		auto raider = em_.create();
@@ -123,6 +140,11 @@ int Engine::run() {
 		Time::deltaTime_ = frameTime;
 		accumulator += frameTime;
 
+		ImGui_ImplGlfwGL3_NewFrame();
+		archiveViewer.draw();
+		glViewer.draw();
+		ecsViewer.draw();
+
 		window_.update();
 
 		while (accumulator >= Time::fixedDeltaTime_) {
@@ -134,11 +156,6 @@ int Engine::run() {
 		window_.clear(glm::vec4(0.4f, 0.4f, 0.4f, 1.0f));
 		em_.render();
 		em_.render2d();
-
-		ImGui_ImplGlfwGL3_NewFrame();
-		archiveViewer.draw();
-		glViewer.draw();
-		ecsViewer.draw();
 
 		ImGui::Begin("Coordinates", &debugWindowOpen);
 		ImGui::BeginChild("coordinates", ImVec2(0, 0), false);
@@ -222,6 +239,48 @@ bool Engine::setupCamera() {
 	CameraComponent::main = cameraComponent;
 	//cameraComponent->mode = CameraMode::Target;
 	//cameraComponent->target = glm::vec3(0, 0, 0);
+
+	return true;
+}
+
+bool Engine::setupUnits(ConfigParser &legoCfg) {
+	UnitCompendium::add(legoCfg, "Pilot", UnitType::MiniFigure);
+
+	UnitCompendium::add(legoCfg, "Hoverboard", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, "SmallDigger", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, "SmallTruck", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, "SmallCat", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, "SmallMLP", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, "SmallHeli", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, "BullDozer", UnitType::Vehicle);
+	// TODO: WalkerDigger has the folder path split by a comma, investigate
+	//UnitCompendium::add(legoCfg, "WalkerDigger", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, "LargeMLP", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, "LargeDigger", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, "LargeCat", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, "LargeHeli", UnitType::Vehicle);
+
+	UnitCompendium::add(legoCfg, "RockMonster", UnitType::Monster);
+	UnitCompendium::add(legoCfg, "TinyRM", UnitType::Monster);
+	UnitCompendium::add(legoCfg, "TinyIM", UnitType::Monster);
+	UnitCompendium::add(legoCfg, "SmallSpider", UnitType::Monster);
+	UnitCompendium::add(legoCfg, "Bat", UnitType::Monster);
+	UnitCompendium::add(legoCfg, "Slug", UnitType::Monster);
+	UnitCompendium::add(legoCfg, "LavaMonster", UnitType::Monster);
+	UnitCompendium::add(legoCfg, "IceMonster", UnitType::Monster);
+
+	UnitCompendium::add(legoCfg, "Toolstation", UnitType::Building);
+	UnitCompendium::add(legoCfg, "TeleportPad", UnitType::Building);
+	UnitCompendium::add(legoCfg, "Docks", UnitType::Building);
+	UnitCompendium::add(legoCfg, "PowerStation", UnitType::Building);
+	UnitCompendium::add(legoCfg, "Barracks", UnitType::Building);
+	UnitCompendium::add(legoCfg, "Upgrade", UnitType::Building);
+	UnitCompendium::add(legoCfg, "Geo-dome", UnitType::Building);
+	UnitCompendium::add(legoCfg, "OreRefinery", UnitType::Building);
+	UnitCompendium::add(legoCfg, "Gunstation", UnitType::Building);
+	UnitCompendium::add(legoCfg, "TeleportBIG", UnitType::Building);
+
+	UnitFactory::archive_ = &archive_;
 
 	return true;
 }

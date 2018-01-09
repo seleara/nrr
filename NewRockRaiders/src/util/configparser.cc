@@ -39,6 +39,7 @@ void ConfigParser::parse(WadArchive &archive, const std::string &path) {
 			} else {
 				id = lastLineWithText;
 			}
+			StringUtil::toLower(id);
 			next->id = id;
 			next->parent = current;
 			next->type = ConfigNodeType::Block;
@@ -68,6 +69,7 @@ void ConfigParser::parse(WadArchive &archive, const std::string &path) {
 			if (tokens.size() == 2) {
 				auto value = std::make_unique<ConfigValue>();
 				value->id = tokens[0];
+				StringUtil::toLower(value->id);
 				value->value = tokens[1];
 				value->parent = current;
 				value->type = ConfigNodeType::Value;
