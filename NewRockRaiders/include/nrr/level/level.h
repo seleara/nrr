@@ -46,7 +46,8 @@ enum class GroundType {
 enum class PathType {
 	None,
 	Rubble,
-	PowerPath
+	PowerPath,
+	BuildingPowerPath
 };
 
 struct Tile {
@@ -66,10 +67,11 @@ struct Tile {
 	PathType pathType;
 	float rubble;
 	float height;
+	bool powered = false;
 
 	glm::vec4 highlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-	bool dirty = true;
+	bool dirty = false;
 
 	bool operator==(const Tile &other) const {
 		bool ret = initialized == other.initialized;
@@ -89,6 +91,7 @@ struct Tile {
 		ret &= rubble == other.rubble;
 		ret &= height == other.height;
 		ret &= highlightColor == other.highlightColor;
+		ret &= powered == other.powered;
 		return ret;
 	}
 
@@ -123,8 +126,14 @@ struct Selection {
 
 struct Level : public Component<Level> {
 	void load(EntityManager &em, ConfigParser &config, WadArchive &archive, int level);
+	inline int tileIndex(int x, int y) const {
+		return (y * size.x + x);
+	}
+	inline int tileVertexIndex(int x, int y) const {
+		return tileIndex(x, y) * 6;
+	}
 	Tile *tile(int x, int y) {
-		if (x >= 0 && x < size.x && y >= 0 && y < size.y) return &tiles[y * size.x + x];
+		if (x >= 0 && x < size.x && y >= 0 && y < size.y) return &tiles[tileIndex(x, y)];
 		return nullptr;
 	}
 	glm::ivec2 size;

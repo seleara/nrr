@@ -244,41 +244,41 @@ bool Engine::setupCamera() {
 }
 
 bool Engine::setupUnits(ConfigParser &legoCfg) {
-	UnitCompendium::add(legoCfg, "Pilot", UnitType::MiniFigure);
+	UnitCompendium::add(legoCfg, archive_, "Pilot", UnitType::MiniFigure);
 
-	UnitCompendium::add(legoCfg, "Hoverboard", UnitType::Vehicle);
-	UnitCompendium::add(legoCfg, "SmallDigger", UnitType::Vehicle);
-	UnitCompendium::add(legoCfg, "SmallTruck", UnitType::Vehicle);
-	UnitCompendium::add(legoCfg, "SmallCat", UnitType::Vehicle);
-	UnitCompendium::add(legoCfg, "SmallMLP", UnitType::Vehicle);
-	UnitCompendium::add(legoCfg, "SmallHeli", UnitType::Vehicle);
-	UnitCompendium::add(legoCfg, "BullDozer", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, archive_, "Hoverboard", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, archive_, "SmallDigger", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, archive_, "SmallTruck", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, archive_, "SmallCat", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, archive_, "SmallMLP", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, archive_, "SmallHeli", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, archive_, "BullDozer", UnitType::Vehicle);
 	// TODO: WalkerDigger has the folder path split by a comma, investigate
-	//UnitCompendium::add(legoCfg, "WalkerDigger", UnitType::Vehicle);
-	UnitCompendium::add(legoCfg, "LargeMLP", UnitType::Vehicle);
-	UnitCompendium::add(legoCfg, "LargeDigger", UnitType::Vehicle);
-	UnitCompendium::add(legoCfg, "LargeCat", UnitType::Vehicle);
-	UnitCompendium::add(legoCfg, "LargeHeli", UnitType::Vehicle);
+	//UnitCompendium::add(legoCfg, archive_, "WalkerDigger", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, archive_, "LargeMLP", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, archive_, "LargeDigger", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, archive_, "LargeCat", UnitType::Vehicle);
+	UnitCompendium::add(legoCfg, archive_, "LargeHeli", UnitType::Vehicle);
 
-	UnitCompendium::add(legoCfg, "RockMonster", UnitType::Monster);
-	UnitCompendium::add(legoCfg, "TinyRM", UnitType::Monster);
-	UnitCompendium::add(legoCfg, "TinyIM", UnitType::Monster);
-	UnitCompendium::add(legoCfg, "SmallSpider", UnitType::Monster);
-	UnitCompendium::add(legoCfg, "Bat", UnitType::Monster);
-	UnitCompendium::add(legoCfg, "Slug", UnitType::Monster);
-	UnitCompendium::add(legoCfg, "LavaMonster", UnitType::Monster);
-	UnitCompendium::add(legoCfg, "IceMonster", UnitType::Monster);
+	UnitCompendium::add(legoCfg, archive_, "RockMonster", UnitType::Monster);
+	UnitCompendium::add(legoCfg, archive_, "TinyRM", UnitType::Monster);
+	UnitCompendium::add(legoCfg, archive_, "TinyIM", UnitType::Monster);
+	UnitCompendium::add(legoCfg, archive_, "SmallSpider", UnitType::Monster);
+	UnitCompendium::add(legoCfg, archive_, "Bat", UnitType::Monster);
+	UnitCompendium::add(legoCfg, archive_, "Slug", UnitType::Monster);
+	UnitCompendium::add(legoCfg, archive_, "LavaMonster", UnitType::Monster);
+	UnitCompendium::add(legoCfg, archive_, "IceMonster", UnitType::Monster);
 
-	UnitCompendium::add(legoCfg, "Toolstation", UnitType::Building);
-	UnitCompendium::add(legoCfg, "TeleportPad", UnitType::Building);
-	UnitCompendium::add(legoCfg, "Docks", UnitType::Building);
-	UnitCompendium::add(legoCfg, "PowerStation", UnitType::Building);
-	UnitCompendium::add(legoCfg, "Barracks", UnitType::Building);
-	UnitCompendium::add(legoCfg, "Upgrade", UnitType::Building);
-	UnitCompendium::add(legoCfg, "Geo-dome", UnitType::Building);
-	UnitCompendium::add(legoCfg, "OreRefinery", UnitType::Building);
-	UnitCompendium::add(legoCfg, "Gunstation", UnitType::Building);
-	UnitCompendium::add(legoCfg, "TeleportBIG", UnitType::Building);
+	UnitCompendium::add(legoCfg, archive_, "Toolstation", UnitType::Building);
+	UnitCompendium::add(legoCfg, archive_, "TeleportPad", UnitType::Building);
+	UnitCompendium::add(legoCfg, archive_, "Docks", UnitType::Building);
+	UnitCompendium::add(legoCfg, archive_, "PowerStation", UnitType::Building);
+	UnitCompendium::add(legoCfg, archive_, "Barracks", UnitType::Building);
+	UnitCompendium::add(legoCfg, archive_, "Upgrade", UnitType::Building);
+	UnitCompendium::add(legoCfg, archive_, "Geo-dome", UnitType::Building);
+	UnitCompendium::add(legoCfg, archive_, "OreRefinery", UnitType::Building);
+	UnitCompendium::add(legoCfg, archive_, "Gunstation", UnitType::Building);
+	UnitCompendium::add(legoCfg, archive_, "TeleportBIG", UnitType::Building);
 
 	UnitFactory::archive_ = &archive_;
 

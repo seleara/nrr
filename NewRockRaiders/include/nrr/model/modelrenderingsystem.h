@@ -77,12 +77,10 @@ public:
 				auto &obj = anim->objects_[i];
 				if (obj.mesh) {
 					mvp->model = m.animation_.matrices_[i].matrix;
-					auto scale = glm::scale(glm::mat4(), t.scale);
-					auto rotate = glm::mat4_cast(t.rotation) * scale;
-					auto trans = glm::translate(rotate, t.position);
-					mvp->model = trans * mvp->model;
-					// Rotation and scale later
-					//UniformBuffer::updateUniformBuffer("mvp");
+					auto scale = glm::scale(glm::mat4(), t.scale * m.transform().scale);
+					auto trans = glm::translate(glm::mat4(), t.position);
+					auto rotate = glm::mat4_cast(t.rotation);
+					mvp->model = trans * rotate * scale * mvp->model;
 					mvp.update();
 					((LightwaveMesh *)obj.mesh)->render(m.animation_.currentFrame_, shader, whiteTexture);
 				}

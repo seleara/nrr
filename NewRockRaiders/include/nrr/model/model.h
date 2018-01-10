@@ -9,6 +9,7 @@
 #include <nrr/resource/resource.h>
 #include <nrr/resource/resourceloader.h>
 #include <nrr/math/vertexbuffer.h>
+#include <nrr/math/transform.h>
 
 class ModelResource;
 
@@ -106,6 +107,9 @@ public:
 protected:
 	friend class ModelMesh;
 	friend class ModelAnimation;
+	friend class ModelWrapper;
+
+	Transform transform_;
 	std::map<std::string, std::shared_ptr<ModelMesh>> meshes_;
 	std::map<std::string, std::shared_ptr<ModelAnimation>> animations_;
 };
@@ -119,6 +123,7 @@ public:
 	void render();
 	void play(const std::string &animationName);
 	void playExternal(const std::string &path);
+	const Transform &transform() const;
 protected:
 	friend class ModelRenderingSystem;
 

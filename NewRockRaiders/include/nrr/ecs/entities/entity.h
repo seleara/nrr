@@ -10,6 +10,7 @@ class ComponentWrapper;
  */
 class Entity {
 public:
+	Entity() : id_(0), manager_(nullptr) {}
 	Entity(const Entity &entity);
 
 	Entity(Entity &&entity);

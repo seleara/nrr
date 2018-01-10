@@ -16,6 +16,15 @@ enum class UnitType {
 	Upgrade // Not sure if it should be here
 };
 
+struct FoundationSquare {
+	enum class Color {
+		Green,
+		Yellow,
+		Blue
+	} color;
+	int x, y;
+};
+
 struct UnitInfo {
 	UnitType type;
 
@@ -37,11 +46,14 @@ struct UnitInfo {
 	std::vector<float> medDrillTime;
 	std::vector<float> hardDrillTime;
 	std::vector<float> seamDrillTime;
+
+	// Building-specific
+	std::vector<FoundationSquare> shape;
 };
 
 class UnitCompendium {
 public:
-	static void add(ConfigParser &legoCfg, std::string_view unitName, UnitType unitType) {
+	static void add(ConfigParser &legoCfg, WadArchive &archive, std::string_view unitName, UnitType unitType) {
 		auto info = std::make_shared<UnitInfo>();
 
 		info->type = unitType;
@@ -71,6 +83,48 @@ public:
 		std::replace(info->folderPath.begin(), info->folderPath.end(), '\\', '/');
 		auto aeName = info->folderPath.substr(info->folderPath.find_last_of('/') + 1);
 		info->aePath = info->folderPath + '/' + aeName + ".ae";
+
+		if (info->type == UnitType::Building) {
+			ConfigParser ae;
+			ae.parse(archive, info->aePath);
+			std::stringstream ss;
+			if (ae.exists("Lego*/Shape")) {
+				auto shape = ae.get("Lego*/Shape");
+				auto squares = StringUtil::splitRef(shape, { ':' });
+
+				auto strToNum = [&ss](std::string_view &sqstr)->glm::ivec2 {
+					auto strstr = std::string(sqstr);
+					auto coords = StringUtil::splitRef(strstr, { ',' });
+					glm::ivec2 square;
+					ss.str("");
+					ss.clear();
+					ss << std::string(coords[0]) << " " << std::string(coords[1]);
+					std::cout << ss.str() << "\n";
+					//ss >> square.y >> square.x; -- According to tutorial from RRU
+					ss >> square.x >> square.y; // Seems more accurate
+					square.y = -square.y;
+					return square;
+				};
+
+				glm::ivec2 lastSquare = glm::ivec2(0, 0);
+				auto lastSquareCol = FoundationSquare::Color::Green;
+				int start = 0;
+				for (int i = start; i < squares.size(); ++i) {
+					auto sqstr = squares[i];
+					auto square = strToNum(sqstr);
+					if (square == lastSquare) {
+						lastSquareCol = FoundationSquare::Color::Yellow;
+					} else {
+						info->shape.push_back(FoundationSquare{ lastSquareCol, lastSquare.x, lastSquare.y });
+						lastSquareCol = FoundationSquare::Color::Green;
+					}
+					if (i == squares.size() - 1) {
+						info->shape.push_back(FoundationSquare{ lastSquareCol, square.x, square.y });
+					}
+					lastSquare = square;
+				}
+			}
+		}
 
 		unitInfos_.insert({ std::string(unitName), info });
 	}

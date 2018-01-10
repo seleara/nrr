@@ -5,8 +5,10 @@
 
 class LevelSystem : public System<LevelSystem> {
 public:
+	void init() override;
 	void update() override;
 	void fixedUpdate() override;
 	void render() override;
 private:
+	Entity pick_;
 };

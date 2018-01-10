@@ -66,7 +66,7 @@ public:
 
 	void uploadPart(const void *buffer, int offset, size_t size) {
 		bind();
-		glBufferSubData(type_ == VertexBufferType::Array ? GL_ARRAY_BUFFER : GL_ELEMENT_ARRAY_BUFFER, offset, size * sizeof(T), buffer);
+		glBufferSubData(type_ == VertexBufferType::Array ? GL_ARRAY_BUFFER : GL_ELEMENT_ARRAY_BUFFER, offset * sizeof(T), size * sizeof(T), buffer);
 	}
 
 	void bind() {

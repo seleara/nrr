@@ -189,3 +189,7 @@ void ModelWrapper::play(const std::string &animationName) {
 void ModelWrapper::playExternal(const std::string &path) {
 	animation_ = resource_->externalAnimation(path);
 }
+
+const Transform &ModelWrapper::transform() const {
+	return resource_->transform_;
+}

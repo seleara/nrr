@@ -9,6 +9,7 @@ class EntityManager;
 class BaseSystem {
 public:
 	virtual ~BaseSystem() {}
+	virtual void init() {}
 	virtual void update() {}
 	virtual void fixedUpdate() {}
 	virtual void render() {}

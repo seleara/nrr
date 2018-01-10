@@ -116,6 +116,8 @@ void Level::load(EntityManager &em, ConfigParser &config, WadArchive &archive, i
 		auto tutoPath = config.get(levelBlock + "BlockPointersMap");
 	}
 
+	setup(archive);
+
 	if (config.exists(levelBlock + "OListFile")) {
 		auto olPath = config.get(levelBlock + "OListFile");
 		ConfigParser ol;
@@ -128,24 +130,46 @@ void Level::load(EntityManager &em, ConfigParser &config, WadArchive &archive, i
 			ss.str("");
 			if (ol.exists(objPath)) {
 				auto type = ol.get(objPath + "/type");
-				auto xPos = ol.get<float>(objPath + "/xPos");
+				auto xPos = ol.get<float>(objPath + "/xPos") - 1.0f;
 				auto yPos = ol.get<float>(objPath + "/yPos");
+				auto heading = ol.get<float>(objPath + "/heading");
 				if (type == "TVCamera") {
 					auto &pos = CameraComponent::main.entity().get<TransformComponent>()->position;
 					pos.x = xPos * blockSize;
 					pos.z = yPos * blockSize;
 				} else {
 					auto unit = UnitFactory::create(em, type);
-					unit.get<TransformComponent>()->position = glm::vec3(xPos * blockSize, 60, yPos * blockSize);
+					auto tc = unit.get<TransformComponent>();
+					tc->position = glm::vec3(xPos * blockSize, 60, yPos * blockSize);
+					tc->rotation = glm::rotate(glm::quat(), heading / 180.0f * glm::pi<float>(), glm::vec3(0, 1, 0));
 					unit.get<ModelComponent>()->play("Activity_Stand");
+
+					auto info = UnitCompendium::get(type);
+					int bx = (int)xPos;
+					int by = size.y - (int)yPos;
+					if (info->type == UnitType::Building) {
+						for (auto &sq : info->shape) {
+							auto xx = bx + sq.x;
+							auto yy = by + sq.y;
+							auto t = tile(xx, yy);
+							t->pathType = PathType::BuildingPowerPath;
+							tile(xx, yy + 1)->height = t->height;
+							tile(xx + 1, yy)->height = t->height;
+							tile(xx + 1, yy + 1)->height = t->height;
+							t->dirty = true;
+						}
+						auto t = tile(bx, by);
+						tc->position.y = t->height;
+					} else {
+						auto t = tile(bx, by);
+						tc->position.y = t->height;
+					}
 				}
 			} else {
 				break;
 			}
 		}
 	}
-
-	setup(archive);
 }
 
 void Level::setup(WadArchive &archive) {
@@ -295,22 +319,24 @@ bool Level::updateTile(int x, int y) {
 }
 
 void Level::updateTileVertices(int x, int y) {
-	auto &t = tiles[y * size.x + x];
-	auto index = (y * size.x + x) * 6;
+	auto &t = *tile(x, y);
+	auto index = tileVertexIndex(x, y);
 
 	TileHeights th;
 	th.topLeft = t.height;
 	if (x < size.x - 1) {
-		th.topRight = tiles[y * size.x + x + 1].height;
+		th.topRight = tile(x + 1, y)->height;
 		if (y > 0) {
-			th.bottomRight = tiles[(y - 1) * size.x + x + 1].height;
+			th.bottomRight = tile(x + 1, y - 1)->height;
+		} else {
+			th.bottomRight = th.topRight;
 		}
 	} else {
 		th.topRight = th.topLeft;
 		th.bottomRight = th.topLeft;
 	}
 	if (y > 0) {
-		th.bottomLeft = tiles[(y - 1) * size.x + x].height;
+		th.bottomLeft = tile(x, y - 1)->height;
 	} else {
 		th.bottomLeft = th.topLeft;
 	}
@@ -387,8 +413,24 @@ void Level::updateTileVertices(int x, int y) {
 		case GroundType::Lava:
 			setUVs<0>(&vertices[index], 47);
 			break;
+		case GroundType::SlugHole:
+			setUVs<0>(&vertices[index], 31);
+			break;
 		default:
-			setUVs<0>(&vertices[index], 1);
+			switch (t.pathType) {
+			case PathType::None:
+				setUVs<0>(&vertices[index], 1);
+				break;
+			case PathType::Rubble:
+				setUVs<0>(&vertices[index], 14 - (int)(t.rubble * 3));
+				break;
+			case PathType::PowerPath:
+				setUVs<0>(&vertices[index], 61);
+				break;
+			case PathType::BuildingPowerPath:
+				setUVs<0>(&vertices[index], 77);
+				break;
+			}
 			break;
 		}
 
@@ -405,6 +447,6 @@ void Level::uploadTiles() {
 }
 
 void Level::uploadTile(int x, int y) {
-	auto index = (y * size.x + x) * 6;
-	buffer.uploadPart(vertices.data(), index, sizeof(LevelVertex) / sizeof(float));
+	auto index = tileVertexIndex(x, y);
+	buffer.uploadPart(vertices.data() + index, index * sizeof(LevelVertex) / sizeof(float), 6 * sizeof(LevelVertex) / sizeof(float));
 }

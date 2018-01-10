@@ -44,6 +44,7 @@ public:
 	void registerSystem() {
 		auto *system = new S();
 		system->manager_ = this;
+		system->init();
 		systems_.push_back(system);
 	}
 
