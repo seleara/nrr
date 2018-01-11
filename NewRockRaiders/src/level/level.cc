@@ -125,6 +125,9 @@ void Level::load(EntityManager &em, ConfigParser &config, WadArchive &archive, i
 
 		std::stringstream ss;
 		for (int i = 1;; ++i) {
+			// TODO: Make a method in ConfigParser to retrieve the name of all children of a node.
+			// While most levels use the Object1, Object2, etc. convention, some use named objects,
+			// such as level 7.
 			ss << "Lego*/Object" << i;
 			auto objPath = ss.str();
 			ss.str("");
@@ -132,7 +135,7 @@ void Level::load(EntityManager &em, ConfigParser &config, WadArchive &archive, i
 				auto type = ol.get(objPath + "/type");
 				auto xPos = ol.get<float>(objPath + "/xPos") - 1.0f;
 				auto yPos = ol.get<float>(objPath + "/yPos");
-				auto heading = ol.get<float>(objPath + "/heading");
+				auto heading = ol.get<float>(objPath + "/heading") + 180.0f;
 				if (type == "TVCamera") {
 					auto &pos = CameraComponent::main.entity().get<TransformComponent>()->position;
 					pos.x = xPos * blockSize;
@@ -153,7 +156,6 @@ void Level::load(EntityManager &em, ConfigParser &config, WadArchive &archive, i
 							auto yy = by + sq.y;
 							auto t = tile(xx, yy);
 							t->pathType = PathType::BuildingPowerPath;
-							tile(xx, yy + 1)->height = t->height;
 							tile(xx + 1, yy)->height = t->height;
 							tile(xx + 1, yy + 1)->height = t->height;
 							t->dirty = true;

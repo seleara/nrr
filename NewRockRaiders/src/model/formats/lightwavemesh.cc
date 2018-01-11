@@ -103,7 +103,7 @@ void LightwaveMesh::readPoints(int chunkSize, BinaryReader &br) {
 		Vertex vert;
 		vert.point.x = br.readBE<float>();
 		vert.point.y = br.readBE<float>();
-		vert.point.z = -br.readBE<float>();
+		vert.point.z = br.readBE<float>();
 		points.push_back(vert);
 	}
 }
@@ -435,67 +435,86 @@ void LightwaveMesh::render() {
 void LightwaveMesh::render(int sequenceFrame) {
 }
 
-void LightwaveMesh::render(int sequenceFrame, Shader &shader, Texture &whiteTexture) {
-	// Ugly hack to avoid constructing these strings every time this function is called
-	static const std::string modelShaderName = "model";
-	static const std::string whiteTextureName = "white";
-	static const std::string colorLocationName = "color";
-	static const std::string pixelBlendingLocationName = "pixelBlending";
-	static const std::string pixelBlendingColorLocationName = "pixelBlendingColor";
-	// Ugly hack end
+const glm::vec4 LightwaveMesh::white_(1.0f, 1.0f, 1.0f, 1.0f);
 
+void LightwaveMesh::renderAdditive(int sequenceFrame, Shader &shader, Texture &whiteTexture) {
 	glBindVertexArray(vao_);
 	int start = 0;
 	bool invalid = false, blending = false;
 
-	constexpr unsigned int colorLocation = 0; //shader.uniformLocation(colorLocationName);
-	constexpr unsigned int hasColorKeyLocation = 1; //shader.uniformLocation(pixelBlendingLocationName);
-	constexpr unsigned int colorKeyLocation = 2; //shader.uniformLocation(pixelBlendingColorLocationName);
+	RenderSettings renderSettings, lastRenderSettings;
 
-	static const glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
+	int renderCount = 0;
 
-	// When rendering a mesh, several polygons can share parameters, in which case we can render them all together with a single draw call
-	// Using the RenderSettings struct, we keep track of state changes and only render polygons in batch if the next one processed would
-	// need a state change.
-	//
-	// TODO: A possibly better approach would be to create a texture atlas when loading a mesh and preprocess it (color key, additivity, etc.)
-	// resulting in only a single draw call being needed per mesh. However, this would result in an increased load time and would result in
-	// premature optimization at this stage, so it will be put on hold for now.
-	struct RenderSettings {
-		TextureResource *texture = nullptr;
-		bool hasColorKey = false;
-		glm::ivec4 colorKey;
-		bool additive = false;
-		bool invalid = false;
-		glm::vec4 color;
-		bool operator==(const RenderSettings &other) {
-			return other.texture == texture && other.hasColorKey == hasColorKey && other.invalid == invalid && other.color == color && other.colorKey == colorKey;
+	for (int i = 1; i < polygons.size(); ++i) {
+		if (polygons[i].size() == 0) continue;
+		//if (i != 0) {
+		auto &surf = surfs[i - 1];
+		if (surf.ctex.textures.size() != 0) {
+			if (surf.ctex.animation == LightwaveTextureAnimation::None) {
+				if (surf.ctex.textures[0].valid()) {
+					renderSettings.texture = surf.ctex.textures[0].get();
+					renderSettings.invalid = false;
+				} else {
+					renderSettings.texture = whiteTexture.get();
+					renderSettings.invalid = true;
+					renderSettings.color = surf.color;
+				}
+			} else if (surf.ctex.animation == LightwaveTextureAnimation::Sequence) {
+				// Temporary frame hack
+				//texture = &surf.ctex.textures[sequenceFrame % surf.ctex.textures.size()];
+				renderSettings.texture = surf.ctex.textures[sequenceFrame % surf.ctex.textures.size()].get();
+			}
+			if (surf.ctex.hasColorKey && !renderSettings.invalid) {
+				renderSettings.hasColorKey = true;
+				renderSettings.colorKey = surf.ctex.colorKey;
+			} else {
+				renderSettings.hasColorKey = false;
+			}
+			if (surf.flags & 0x200) {
+				renderSettings.additive = true;
+			} else {
+				renderSettings.additive = false;
+			}
+		} else {
+			renderSettings.texture = whiteTexture.get();
+			renderSettings.invalid = true;
+			renderSettings.color = surf.color;
 		}
-	} renderSettings, lastRenderSettings;
+		//}
+		renderCount += polygons[i].size() * 3;
+		if (renderSettings == lastRenderSettings || i < 1) {
+			lastRenderSettings = renderSettings;
+			continue;
+		}
+		lastRenderSettings = renderSettings;
+		if (lastRenderSettings.additive) {
+			updateShader(lastRenderSettings, shader);
+			buffer_.draw(Primitives::Triangles, start, renderCount, indexBuffer_);
+		}
+		start += renderCount;
+		renderCount = 0;
+	}
+	lastRenderSettings = renderSettings;
+	if (renderCount > 0) {
+		if (lastRenderSettings.additive) {
+			updateShader(lastRenderSettings, shader);
+			buffer_.draw(Primitives::Triangles, start, renderCount, indexBuffer_);
+		}
+	}
+	//glBindVertexArray(0);
+	if (lastRenderSettings.additive) {
+		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+		glDepthMask(GL_TRUE);
+	}
+}
 
-	// When a state change is about to occur, the shader is updated with the render settings
-	// of the previous batch of polygons by this function being called
-	auto updateShader = [&](const RenderSettings &settings) {
-		settings.texture->bind();
-		if (!settings.invalid) {
-			shader.setUniform(colorLocation, white);
-		} else {
-			shader.setUniform(colorLocation, lastRenderSettings.color);
-		}
-		if (settings.hasColorKey) {
-			shader.setUniform(hasColorKeyLocation, true);
-			shader.setUniform(colorKeyLocation, (glm::vec4)settings.colorKey / 255.0f);
-		} else {
-			shader.setUniform(hasColorKeyLocation, false);
-		}
-		if (settings.additive) {
-			glBlendFunc(GL_ONE, GL_SRC_ALPHA);
-			glDepthMask(GL_FALSE);
-		} else {
-			glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-			glDepthMask(GL_TRUE);
-		}
-	};
+void LightwaveMesh::renderOpaque(int sequenceFrame, Shader &shader, Texture &whiteTexture) {
+	glBindVertexArray(vao_);
+	int start = 0;
+	bool invalid = false, blending = false;
+
+	RenderSettings renderSettings, lastRenderSettings;
 
 	int renderCount = 0;
 
@@ -524,7 +543,7 @@ void LightwaveMesh::render(int sequenceFrame, Shader &shader, Texture &whiteText
 				} else {
 					renderSettings.hasColorKey = false;
 				}
-				if (surf.flags & 0x100) {
+				if (surf.flags & 0x200) {
 					renderSettings.additive = true;
 				} else {
 					renderSettings.additive = false;
@@ -541,15 +560,19 @@ void LightwaveMesh::render(int sequenceFrame, Shader &shader, Texture &whiteText
 			continue;
 		}
 		lastRenderSettings = renderSettings;
-		updateShader(lastRenderSettings);
-		buffer_.draw(Primitives::Triangles, start, renderCount, indexBuffer_);
+		if (!lastRenderSettings.additive) {
+			updateShader(lastRenderSettings, shader);
+			buffer_.draw(Primitives::Triangles, start, renderCount, indexBuffer_);
+		}
 		start += renderCount;
 		renderCount = 0;
 	}
 	lastRenderSettings = renderSettings;
 	if (renderCount > 0) {
-		updateShader(lastRenderSettings);
-		buffer_.draw(Primitives::Triangles, start, renderCount, indexBuffer_);
+		if (!lastRenderSettings.additive) {
+			updateShader(lastRenderSettings, shader);
+			buffer_.draw(Primitives::Triangles, start, renderCount, indexBuffer_);
+		}
 	}
 	//glBindVertexArray(0);
 	if (lastRenderSettings.additive) {

@@ -43,8 +43,8 @@ int Engine::run() {
 	ECSViewer ecsViewer(em_);
 
 	em_.registerSystem<SpriteRenderingSystem>();
-	em_.registerSystem<ModelRenderingSystem>();
 	em_.registerSystem<LevelSystem>();
+	em_.registerSystem<ModelRenderingSystem>();
 	em_.registerSystem<CameraSystem>();
 
 	auto test = em_.create();
@@ -92,7 +92,7 @@ int Engine::run() {
 	auto capT = captain.add<TransformComponent>();
 	capT->position = glm::vec3(0, 0, 0);
 	capT->scale = glm::vec3(10, 10, 10);
-	//capT->rotation = glm::angleAxis(3.1415f, glm::vec3(1, 0, 0)) * glm::angleAxis(1.58f, glm::vec3(1, 0, 0));
+	capT->rotation = glm::angleAxis(3.1415f, glm::vec3(0, 1, 0));// *glm::angleAxis(1.58f, glm::vec3(1, 0, 0));
 	auto capModel = captain.add<ModelComponent>();
 	capModel->create(archive_, "Captain");
 	capModel->playExternal("mini-figures/captain/new_captain_point_talking.lws");

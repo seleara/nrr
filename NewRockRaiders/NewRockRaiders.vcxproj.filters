@@ -108,6 +108,12 @@
     <ClCompile Include="src\units\unitinfo.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\math\camerasystem.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\model\modelrenderingsystem.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\nrr\ecs\entities\entity.h">

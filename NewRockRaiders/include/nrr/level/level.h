@@ -12,9 +12,9 @@ enum class WallType {
 	LooseRock,
 	HardRock,
 	SolidRock,
-	EnergyCrystalSeam,
-	OreSeam,
-	RechargeSeam
+	EnergyCrystalSeam = 18,
+	OreSeam = 38,
+	RechargeSeam = 65,
 };
 
 enum class WallOrientation {

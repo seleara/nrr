@@ -142,12 +142,14 @@
     <ClCompile Include="src\level\levelsystem.cc" />
     <ClCompile Include="src\main.cc" />
     <ClCompile Include="src\math\camera.cc" />
+    <ClCompile Include="src\math\camerasystem.cc" />
     <ClCompile Include="src\math\clock.cc" />
     <ClCompile Include="src\math\time.cc" />
     <ClCompile Include="src\math\uniformbuffer.cc" />
     <ClCompile Include="src\model\formats\lightwave.cc" />
     <ClCompile Include="src\model\formats\lightwavemesh.cc" />
     <ClCompile Include="src\model\model.cc" />
+    <ClCompile Include="src\model\modelrenderingsystem.cc" />
     <ClCompile Include="src\resource\texture\texture.cc" />
     <ClCompile Include="src\resource\wadarchive.cc" />
     <ClCompile Include="src\resource\shader\gl\glshader.cc" />
