@@ -13,7 +13,16 @@ enum class UnitType {
 	Vehicle,
 	Building,
 	Monster,
-	Upgrade // Not sure if it should be here
+	Upgrade, // Not sure if it should be here
+	Resource, // Energy crystals, ore, etc.
+	Projectile,
+	PlaceableBuilding,
+};
+
+enum class UnitModelType {
+	AnimatedEntity,
+	LightwaveScene,
+	LightwaveObject
 };
 
 struct FoundationSquare {
@@ -27,6 +36,8 @@ struct FoundationSquare {
 
 struct UnitInfo {
 	UnitType type;
+
+	UnitModelType modelType;
 
 	std::string name, theName;
 
@@ -54,6 +65,7 @@ struct UnitInfo {
 class UnitCompendium {
 public:
 	static void add(ConfigParser &legoCfg, WadArchive &archive, std::string_view unitName, UnitType unitType);
+	static void add(ConfigParser &legoCfg, WadArchive &archive, std::string_view unitName, UnitType unitType, std::string_view useFolderPath, std::string_view useAEName, UnitModelType modelType=UnitModelType::AnimatedEntity);
 	static std::shared_ptr<UnitInfo> get(std::string_view unitName);
 private:
 	static std::string getFolderPath(ConfigParser &legoCfg, std::string_view unitName, UnitType unitType);

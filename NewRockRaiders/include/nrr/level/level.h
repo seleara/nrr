@@ -68,7 +68,8 @@ struct Tile {
 	float rubble;
 	float height;
 	bool powered = false;
-
+	
+	bool highlighted = false;
 	glm::vec4 highlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	bool dirty = false;
@@ -90,7 +91,8 @@ struct Tile {
 		ret &= pathType == other.pathType;
 		ret &= rubble == other.rubble;
 		ret &= height == other.height;
-		ret &= highlightColor == other.highlightColor;
+		//ret &= highlightColor == other.highlightColor;
+		ret &= highlighted == other.highlighted;
 		ret &= powered == other.powered;
 		return ret;
 	}
@@ -156,7 +158,7 @@ private:
 	void uploadTiles();
 	void uploadTile(int x, int y);
 
-	int bitCount(int n) const {
+	inline int bitCount(int n) const {
 		int count = 0;
 		for (int i = 0; i < 32; ++i) {
 			count += (n & (1 << i)) != 0;
@@ -249,12 +251,13 @@ private:
 	template <int TextureRotation>
 	void setUVs(LevelVertex *lv, int textureIndex) {
 		static_assert(TextureRotation >= 0 && TextureRotation < 4);
-		float unit = textureIndex == 0 ? roofUnit : 0.0625f;
+		static constexpr float regUnit = 0.0625f;
+		float unit = (textureIndex == 0 || textureIndex == 71) ? roofUnit : regUnit;
 		int x = textureIndex % 16;
 		int y = textureIndex / 16;
-		float left = unit * x;
+		float left = regUnit * x;
 		float right = left + unit;
-		float top = unit * y;
+		float top = regUnit * y;
 		float bottom = top + unit;
 
 		switch (TextureRotation) {

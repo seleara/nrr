@@ -5,19 +5,42 @@ std::map<std::string, std::shared_ptr<UnitInfo>, std::less<>> UnitCompendium::un
 WadArchive *UnitFactory::archive_;
 
 void UnitCompendium::add(ConfigParser &legoCfg, WadArchive &archive, std::string_view unitName, UnitType unitType) {
+	add(legoCfg, archive, unitName, unitType, "", "", UnitModelType::AnimatedEntity);
+}
+
+void UnitCompendium::add(ConfigParser &legoCfg, WadArchive &archive, std::string_view unitName, UnitType unitType, std::string_view useFolderPath, std::string_view useAEName, UnitModelType modelType) {
 	auto info = std::make_shared<UnitInfo>();
 
 	info->type = unitType;
 
-	// Names
-	info->name = legoCfg.get("Lego*/ObjectNames/" + unitName);
-	info->theName = legoCfg.get("Lego*/ObjectTheNames/" + unitName);
+	info->modelType = modelType;
 
-	info->folderPath = getFolderPath(legoCfg, unitName, info->type);
+	// Names
+	if (legoCfg.exists("Lego*/ObjectNames/" + unitName)) {
+		info->name = legoCfg.get("Lego*/ObjectNames/" + unitName);
+	} else {
+		info->name = unitName;
+	}
+	if (legoCfg.exists("Lego*/ObjectTheNames/" + unitName)) {
+		info->theName = legoCfg.get("Lego*/ObjectTheNames/" + unitName);
+	} else {
+		info->theName = "The_" + unitName;
+	}
+
+	if (useFolderPath.size() == 0) {
+		info->folderPath = getFolderPath(legoCfg, unitName, info->type);
+	} else {
+		info->folderPath = useFolderPath;
+	}
 
 	std::replace(info->folderPath.begin(), info->folderPath.end(), '\\', '/');
-	auto aeName = info->folderPath.substr(info->folderPath.find_last_of('/') + 1);
-	info->aePath = info->folderPath + '/' + aeName + ".ae";
+
+	if (useAEName.size() == 0) {
+		auto aeName = info->folderPath.substr(info->folderPath.find_last_of('/') + 1);
+		info->aePath = info->folderPath + '/' + aeName + ".ae";
+	} else {
+		info->aePath = info->folderPath + '/' + useAEName + (modelType == UnitModelType::LightwaveScene ? ".lws" : (modelType == UnitModelType::LightwaveObject ? ".lwo" : ".ae"));
+	}
 
 	if (info->type == UnitType::Building) {
 		ConfigParser ae;
@@ -98,7 +121,16 @@ Entity UnitFactory::create(EntityManager &em, std::string_view unitName) {
 	auto unit = em.create();
 	unit.add<TransformComponent>();
 	auto model = unit.add<ModelComponent>();
-	model->load(*archive_, info->aePath);
+	if (info->modelType == UnitModelType::AnimatedEntity) {
+		model->load(*archive_, info->aePath);
+	} else if (info->modelType == UnitModelType::LightwaveScene) {
+		model->create(*archive_, info->name);
+		model->playExternal("Activity_Stand", info->aePath);
+	} else if (info->modelType == UnitModelType::LightwaveObject) {
+		model->create(*archive_, info->name);
+		model->createAnimation("Activity_Stand");
+		//model->animation("Activity_Stand").add(info->aePath);
+	}
 
 	return unit;
 }

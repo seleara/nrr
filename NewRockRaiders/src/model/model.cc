@@ -109,16 +109,18 @@ void AnimationWrapper::update() {
 glm::mat4 AnimationWrapper::calculateMatrix(LightwaveAnimation *anim, ObjectInfo &obj, int frame) {
 	glm::mat4 m;
 	if (obj.parent) {
-		if (matrices_[obj.parentIndex - 1].valid) {
-			m = matrices_[obj.parentIndex - 1].matrix;
+		const auto &pMat = matrices_[obj.parentIndex - 1];
+		if (pMat.valid) {
+			m = pMat.matrix;
 		} else {
 			m = calculateMatrix(anim, *obj.parent, frame);
 		}
 	}
 	const LightwaveKeyframe *kf1 = nullptr, *kf2 = nullptr;
+	auto *kfPtr = &obj.keyframes[0];
 	for (int i = 0; i < obj.keyframes.size(); ++i) {
-		const auto &kfi = obj.keyframes[i];
-		const auto &kfi1 = obj.keyframes[(i + 1) % obj.keyframes.size()];
+		const auto &kfi = kfPtr[i];
+		const auto &kfi1 = kfPtr[(i + 1) % obj.keyframes.size()];
 		if (kfi.frame <= frame && kfi1.frame > frame) {
 			kf1 = &kfi;
 			kf2 = &kfi1;
@@ -147,10 +149,11 @@ void AnimationWrapper::render() {
 	auto anim = (LightwaveAnimation *)animation_;
 	//for (auto &obj : anim->objects_) {
 	auto mvp = UniformBuffer::uniformBuffer<Matrices>("mvp");
+	auto *matPtr = &matrices_[0];
 	for (int i = 0; i < anim->objects_.size(); ++i) {
 		auto &obj = anim->objects_[i];
 		if (obj.mesh) {
-			mvp->model = matrices_[i].matrix;
+			mvp->model = matPtr[i].matrix;
 			//UniformBuffer::updateUniformBuffer("mvp");
 			mvp.update();
 			obj.mesh->render();
@@ -186,8 +189,8 @@ void ModelWrapper::play(const std::string &animationName) {
 	animation_ = resource_->animation(animationName);
 }
 
-void ModelWrapper::playExternal(const std::string &path) {
-	animation_ = resource_->externalAnimation(path);
+void ModelWrapper::playExternal(const std::string &animationName, const std::string &path) {
+	animation_ = resource_->externalAnimation(animationName, path);
 }
 
 const Transform &ModelWrapper::transform() const {

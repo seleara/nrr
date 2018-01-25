@@ -54,11 +54,11 @@ void CameraSystem::update() {
 	t->position += glm::inverse(t->rotation) * cameraVelocity_ * 160.0f * (float)Time::deltaTime();
 	auto w = Window::main().size().x;
 	auto h = Window::main().size().y;
-	mvp->projection = glm::perspectiveFov(45.0f, w, h, 0.1f, 1000.0f);
+	mvp->projection = glm::perspectiveFov(glm::radians(45.0f), w, h, 0.1f, 1000.0f);
 	if (c->mode == CameraMode::Target) {
 		mvp->view = glm::lookAt(t->position, c->target, glm::vec3(0, 1, 0));
 	} else {
-		mvp->view = glm::toMat4(glm::rotate(glm::quat(), 45.0f, glm::vec3(1, 0, 0)) * t->rotation);
+		mvp->view = glm::toMat4(glm::rotate(glm::quat(), glm::radians(40.0f), glm::vec3(1, 0, 0)) * t->rotation);
 		mvp->view = glm::translate(mvp->view, -t->position);
 	}
 	mvp.update();

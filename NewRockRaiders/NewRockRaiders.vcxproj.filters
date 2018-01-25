@@ -114,6 +114,9 @@
     <ClCompile Include="src\model\modelrenderingsystem.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\math\ray.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\nrr\ecs\entities\entity.h">
@@ -174,12 +177,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\nrr\debug\glviewer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\nrr\resource\shader\gl\glshader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\nrr\resource\shader\shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\nrr\util\string.h">
@@ -276,6 +273,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\nrr\units\unitinfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\resource\shader\gl\glshader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nrr\resource\shader\shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

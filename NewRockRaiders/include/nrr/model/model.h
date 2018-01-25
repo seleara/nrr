@@ -88,10 +88,10 @@ public:
 		AnimationWrapper anim(iter->second.get());
 		return anim;
 	}
-	AnimationWrapper externalAnimation(const std::string &path) {
+	AnimationWrapper externalAnimation(const std::string &animationName, const std::string &path) {
 		auto iter = animations_.find(path);
 		if (iter == animations_.end()) {
-			return AnimationWrapper(loadExternalAnimation(path));
+			return AnimationWrapper(loadExternalAnimation(animationName, path));
 		}
 		AnimationWrapper anim(iter->second.get());
 		return anim;
@@ -102,7 +102,8 @@ public:
 	void render();
 
 	virtual ModelAnimation *loadAnimation(const std::string &animationName) = 0;
-	virtual ModelAnimation *loadExternalAnimation(const std::string &path) = 0;
+	virtual ModelAnimation *loadExternalAnimation(const std::string &animationName, const std::string &path) = 0;
+	virtual void createAnimation(const std::string &animationName) = 0;
 	virtual const std::string &name() const = 0;
 protected:
 	friend class ModelMesh;
@@ -122,7 +123,13 @@ public:
 	void update();
 	void render();
 	void play(const std::string &animationName);
-	void playExternal(const std::string &path);
+	void playExternal(const std::string &animationName, const std::string &path);
+	void createAnimation(const std::string &name) {
+		resource_->createAnimation(name);
+	}
+	AnimationWrapper &animation(const std::string &animationName) {
+		return resource_->animation(animationName);
+	}
 	const Transform &transform() const;
 protected:
 	friend class ModelRenderingSystem;

@@ -144,6 +144,7 @@
     <ClCompile Include="src\math\camera.cc" />
     <ClCompile Include="src\math\camerasystem.cc" />
     <ClCompile Include="src\math\clock.cc" />
+    <ClCompile Include="src\math\ray.cc" />
     <ClCompile Include="src\math\time.cc" />
     <ClCompile Include="src\math\uniformbuffer.cc" />
     <ClCompile Include="src\model\formats\lightwave.cc" />

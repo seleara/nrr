@@ -135,7 +135,7 @@ void Level::load(EntityManager &em, ConfigParser &config, WadArchive &archive, i
 				auto type = ol.get(objPath + "/type");
 				auto xPos = ol.get<float>(objPath + "/xPos") - 1.0f;
 				auto yPos = ol.get<float>(objPath + "/yPos");
-				auto heading = ol.get<float>(objPath + "/heading") + 180.0f;
+				auto heading = 180.0f - ol.get<float>(objPath + "/heading");
 				if (type == "TVCamera") {
 					auto &pos = CameraComponent::main.entity().get<TransformComponent>()->position;
 					pos.x = xPos * blockSize;
@@ -347,7 +347,7 @@ void Level::updateTileVertices(int x, int y) {
 		int texAdd = (int)t.wallType;
 		if (t.wallOrientation == WallOrientation::Roof) { // All surrounding walls are walls
 			setPoints<0>(&vertices[index], x, y, { 1, 1, 1, 1 }, th);
-			setUVs<0>(&vertices[index], 0);
+			setUVs<0>(&vertices[index], 71);
 
 			// Edge walls
 		} else if (t.wallOrientation == WallOrientation::EdgeSE) { // SE edge wall

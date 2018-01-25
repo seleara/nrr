@@ -6,9 +6,13 @@
 
 #include <nrr/stb/stb_image.h>
 
+#include <iostream>
+
 const glm::ivec2 &TextureResource::size() const {
 	return size_;
 }
+
+GLuint GLTextureResource::currentTextureId_ = 0;
 
 void GLTextureResource::load(WadArchive &archive, const std::string &path) {
 	const auto &entry = archive.get(path);
@@ -126,16 +130,24 @@ void GLTextureResource::loadPalette(const unsigned char *buffer) {
 				color.a = 255.0f;
 				palette_.push_back(color);
 			}
+		} else {
+			std::cout << std::endl;
 		}
+	} else {
+		std::cout << std::endl;
 	}
 }
 
 void GLTextureResource::bind() {
-	glBindTexture(getEnum(), textureId_);
+	if (textureId_ != currentTextureId_) {
+		glBindTexture(getEnum(), textureId_);
+		currentTextureId_ = textureId_;
+	}
 }
 
 void GLTextureResource::release() {
 	glBindTexture(getEnum(), 0);
+	currentTextureId_ = 0;
 }
 
 GLuint GLTextureResource::id() const {

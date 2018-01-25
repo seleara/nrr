@@ -46,19 +46,19 @@ void ModelRenderingSystem::render() {
 
 	std::map<ModelComponent *, std::vector<glm::mat4>> matCache;
 
+	auto mvp = UniformBuffer::uniformBuffer<Matrices>("mvp");
+
 	// Render opaque surfaces
 	forEach<TransformComponent, ModelComponent>([&](TransformComponent &t, ModelComponent &m) {
 		if (!m.animation_.animation_) return;
 		auto anim = (LightwaveAnimation *)m.animation_.animation_;
-		auto mvp = UniformBuffer::uniformBuffer<Matrices>("mvp");
 		for (int i = 0; i < anim->objects_.size(); ++i) {
 			auto &obj = anim->objects_[i];
 			if (obj.mesh) {
-				mvp->model = m.animation_.matrices_[i].matrix;
 				auto scale = glm::scale(glm::mat4(), t.scale * m.transform().scale * glm::vec3(-1, 1, 1));
 				auto trans = glm::translate(glm::mat4(), t.position);
 				auto rotate = glm::mat4_cast(t.rotation);
-				mvp->model = trans * rotate * scale * mvp->model;
+				mvp->model = trans * rotate * scale * m.animation_.matrices_[i].matrix;
 				matCache[&m].push_back(mvp->model);
 				mvp.update();
 				((LightwaveMesh *)obj.mesh)->renderOpaque(m.animation_.currentFrame_, shader, whiteTexture);
@@ -76,7 +76,6 @@ void ModelRenderingSystem::render() {
 	forEach<TransformComponent, ModelComponent>([&](TransformComponent &t, ModelComponent &m) {
 		if (!m.animation_.animation_) return;
 		auto anim = (LightwaveAnimation *)m.animation_.animation_;
-		auto mvp = UniformBuffer::uniformBuffer<Matrices>("mvp");
 		for (int i = 0; i < anim->objects_.size(); ++i) {
 			auto &obj = anim->objects_[i];
 			if (obj.mesh) {

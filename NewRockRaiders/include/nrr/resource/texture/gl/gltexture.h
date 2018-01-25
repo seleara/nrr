@@ -26,4 +26,6 @@ private:
 	void loadPalette(const unsigned char *buffer);
 
 	GLuint textureId_;
+
+	static GLuint currentTextureId_; // The currently bound texture. Store this to prevent unnecessary GL calls
 };

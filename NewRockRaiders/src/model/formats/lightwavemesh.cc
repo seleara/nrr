@@ -226,28 +226,36 @@ void LightwaveMesh::readSurface(int chunkSize, BinaryReader &br, WadArchive &arc
 					surf.ctex.animation = LightwaveTextureAnimation::Sequence;
 				}
 			}
-			auto folder = StringUtil::folder(path);
+			const std::string *foundFolder;
 			auto pos = br.tellg();
-			std::cout << "Texture Path = " << (folder + timg) << "\n";
-			std::string sharedFolder = "world/shared/";
+			auto &texture = surf.ctex.textures.emplace_back();
+			bool found = true;
+			auto folder = StringUtil::folder(path);
+			static const std::string sharedFolder = "world/shared/";
 			std::string folderPath(folder + timg);
 			std::string sharedFolderPath(sharedFolder + timg);
-			auto &texture = surf.ctex.textures.emplace_back();
-			std::string *foundFolder;
-			if (archive.exists(folderPath)) {
-				texture.load(archive, folderPath);
-				foundFolder = &folder;
-			} else if (archive.exists(sharedFolderPath)) {
-				texture.load(archive, sharedFolderPath);
-				foundFolder = &sharedFolder;
+			if (timgStr != "(none)") {
+				std::cout << "Texture Path = " << (folder + timg) << "\n";
+				if (archive.exists(folderPath)) {
+					texture.load(archive, folderPath);
+					foundFolder = &folder;
+				} else if (archive.exists(sharedFolderPath)) {
+					texture.load(archive, sharedFolderPath);
+					foundFolder = &sharedFolder;
+				} else {
+					// Not found
+					std::cerr << "Warning: Texture \"" << timg << "\" not found in LWO folder or world/shared/, creating dummy texture.\n";
+					texture.create(1, 1, nullptr);
+					foundFolder = nullptr;
+					found = false;
+				}
 			} else {
-				// Not found
-				std::cerr << "Warning: Texture \"" << timg << "\" not found in LWO folder or world/shared/, creating dummy texture.\n";
 				texture.create(1, 1, nullptr);
 				foundFolder = nullptr;
+				found = false;
 			}
 
-			if (surf.ctex.animation == LightwaveTextureAnimation::Sequence && foundFolder) {
+			if (surf.ctex.animation == LightwaveTextureAnimation::Sequence && found) {
 				int sequenceId;
 				std::stringstream startId;
 				auto firstZero = timg.find('0');
@@ -269,7 +277,7 @@ void LightwaveMesh::readSurface(int chunkSize, BinaryReader &br, WadArchive &arc
 				}
 			}
 
-			if ((timg[0] == 'A' || timg[0] == 'a') && timg[4] == '_') {
+			if (foundFolder && (timg[0] == 'A' || timg[0] == 'a') && timg[4] == '_') {
 				// Color key
 				auto colorKeyIndex = (timg[3] - 48) + (timg[2] - 48) * 10 + (timg[1] - 48) * 100;
 				surf.ctex.colorKey = surf.ctex.textures[0].palette(colorKeyIndex);
@@ -310,7 +318,7 @@ std::vector<glm::ivec3> LightwaveMesh::polygonToTriangles(const std::vector<int>
 		tris.emplace_back(polygon[0], polygon[2], polygon[3]);
 	} else if (polygon.size() > 4) {
 		std::cerr << "Warning: Polygon might be concave, in which case this algorithm will fail.\n";
-		for (int i = 0; i < polygons.size() - 2; ++i) {
+		for (int i = 0; i < polygon.size() - 2; ++i) {
 			tris.emplace_back(polygon[0], polygon[i + 1], polygon[i + 2]);
 		}
 	}
@@ -349,6 +357,7 @@ void LightwaveMesh::loadExternalUV(WadArchive &archive, const std::string &path,
 		surf.ctex.flag |= 0x20;
 		//std::cout << "Texture Shared Path = " << (sharedFolder + texturePath) << "\n";
 		auto &texture = surf.ctex.textures.emplace_back();
+		bool found = true;
 		if (archive.exists(folder + trimmedTexturePath)) {
 			texture.load(archive, folder + trimmedTexturePath);
 		} else if (archive.exists(sharedFolder + trimmedTexturePath)) {
@@ -357,9 +366,10 @@ void LightwaveMesh::loadExternalUV(WadArchive &archive, const std::string &path,
 			// Not found
 			std::cerr << "Warning: Texture \"" << trimmedTexturePath << "\" not found in LWO folder or world/shared/, creating dummy texture.\n";
 			texture.create(1, 1, nullptr);
+			found = false;
 		}
 
-		if ((trimmedTexturePath[0] == 'A' || trimmedTexturePath[0] == 'a') && trimmedTexturePath[4] == '_') {
+		if (found && (trimmedTexturePath[0] == 'A' || trimmedTexturePath[0] == 'a') && trimmedTexturePath[4] == '_') {
 			// Color key
 			auto colorKeyIndex = (trimmedTexturePath[3] - 48) + (trimmedTexturePath[2] - 48) * 10 + (trimmedTexturePath[1] - 48) * 100;
 			surf.ctex.colorKey = surf.ctex.textures[0].palette(colorKeyIndex);
@@ -450,58 +460,31 @@ void LightwaveMesh::renderAdditive(int sequenceFrame, Shader &shader, Texture &w
 		if (polygons[i].size() == 0) continue;
 		//if (i != 0) {
 		auto &surf = surfs[i - 1];
-		if (surf.ctex.textures.size() != 0) {
-			if (surf.ctex.animation == LightwaveTextureAnimation::None) {
-				if (surf.ctex.textures[0].valid()) {
-					renderSettings.texture = surf.ctex.textures[0].get();
-					renderSettings.invalid = false;
-				} else {
-					renderSettings.texture = whiteTexture.get();
-					renderSettings.invalid = true;
-					renderSettings.color = surf.color;
-				}
-			} else if (surf.ctex.animation == LightwaveTextureAnimation::Sequence) {
-				// Temporary frame hack
-				//texture = &surf.ctex.textures[sequenceFrame % surf.ctex.textures.size()];
-				renderSettings.texture = surf.ctex.textures[sequenceFrame % surf.ctex.textures.size()].get();
-			}
-			if (surf.ctex.hasColorKey && !renderSettings.invalid) {
-				renderSettings.hasColorKey = true;
-				renderSettings.colorKey = surf.ctex.colorKey;
-			} else {
-				renderSettings.hasColorKey = false;
-			}
-			if (surf.flags & 0x200) {
-				renderSettings.additive = true;
-			} else {
-				renderSettings.additive = false;
-			}
-		} else {
-			renderSettings.texture = whiteTexture.get();
-			renderSettings.invalid = true;
-			renderSettings.color = surf.color;
-		}
-		//}
 		renderCount += polygons[i].size() * 3;
-		if (renderSettings == lastRenderSettings || i < 1) {
-			lastRenderSettings = renderSettings;
+		if (surf.flags & 0x200 == 0) {
 			continue;
 		}
-		lastRenderSettings = renderSettings;
-		if (lastRenderSettings.additive) {
-			updateShader(lastRenderSettings, shader);
+		updateRenderSettings(renderSettings, surf, sequenceFrame, whiteTexture);
+		//}
+		if (renderSettings == lastRenderSettings || i < 1) {
+			//lastRenderSettings = renderSettings;
+			continue;
+		}
+		if (renderSettings.additive) {
+			updateShader(renderSettings, lastRenderSettings, shader);
 			buffer_.draw(Primitives::Triangles, start, renderCount, indexBuffer_);
 		}
+		lastRenderSettings = renderSettings;
 		start += renderCount;
 		renderCount = 0;
 	}
-	lastRenderSettings = renderSettings;
-	if (renderCount > 0) {
-		if (lastRenderSettings.additive) {
-			updateShader(lastRenderSettings, shader);
+	if (renderCount > 0 && renderSettings.initialized) {
+		if (renderSettings.additive) {
+			updateShader(renderSettings, lastRenderSettings, shader);
 			buffer_.draw(Primitives::Triangles, start, renderCount, indexBuffer_);
 		}
 	}
+	lastRenderSettings = renderSettings;
 	//glBindVertexArray(0);
 	if (lastRenderSettings.additive) {
 		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -521,64 +504,33 @@ void LightwaveMesh::renderOpaque(int sequenceFrame, Shader &shader, Texture &whi
 	for (int i = 1; i < polygons.size(); ++i) {
 		if (polygons[i].size() == 0) continue;
 		//if (i != 0) {
-			auto &surf = surfs[i - 1];
-			if (surf.ctex.textures.size() != 0) {
-				if (surf.ctex.animation == LightwaveTextureAnimation::None) {
-					if (surf.ctex.textures[0].valid()) {
-						renderSettings.texture = surf.ctex.textures[0].get();
-						renderSettings.invalid = false;
-					} else {
-						renderSettings.texture = whiteTexture.get();
-						renderSettings.invalid = true;
-						renderSettings.color = surf.color;
-					}
-				} else if (surf.ctex.animation == LightwaveTextureAnimation::Sequence) {
-					// Temporary frame hack
-					//texture = &surf.ctex.textures[sequenceFrame % surf.ctex.textures.size()];
-					renderSettings.texture = surf.ctex.textures[sequenceFrame % surf.ctex.textures.size()].get();
-				}
-				if (surf.ctex.hasColorKey && !renderSettings.invalid) {
-					renderSettings.hasColorKey = true;
-					renderSettings.colorKey = surf.ctex.colorKey;
-				} else {
-					renderSettings.hasColorKey = false;
-				}
-				if (surf.flags & 0x200) {
-					renderSettings.additive = true;
-				} else {
-					renderSettings.additive = false;
-				}
-			} else {
-				renderSettings.texture = whiteTexture.get();
-				renderSettings.invalid = true;
-				renderSettings.color = surf.color;
-			}
-		//}
+		auto &surf = surfs[i - 1];
 		renderCount += polygons[i].size() * 3;
-		if (renderSettings == lastRenderSettings || i < 1) {
-			lastRenderSettings = renderSettings;
+		// If additive, skip
+		if (surf.flags & 0x200) {
 			continue;
 		}
-		lastRenderSettings = renderSettings;
-		if (!lastRenderSettings.additive) {
-			updateShader(lastRenderSettings, shader);
+		updateRenderSettings(renderSettings, surf, sequenceFrame, whiteTexture);
+		//}
+		if (renderSettings == lastRenderSettings || i < 1) {
+			//lastRenderSettings = renderSettings;
+			continue;
+		}
+		if (!renderSettings.additive) {
+			updateShader(renderSettings, lastRenderSettings, shader);
 			buffer_.draw(Primitives::Triangles, start, renderCount, indexBuffer_);
 		}
+		lastRenderSettings = renderSettings;
 		start += renderCount;
 		renderCount = 0;
 	}
-	lastRenderSettings = renderSettings;
-	if (renderCount > 0) {
-		if (!lastRenderSettings.additive) {
-			updateShader(lastRenderSettings, shader);
+	if (renderCount > 0 && renderSettings.initialized) {
+		if (!renderSettings.additive) {
+			updateShader(renderSettings, lastRenderSettings, shader);
 			buffer_.draw(Primitives::Triangles, start, renderCount, indexBuffer_);
 		}
 	}
-	//glBindVertexArray(0);
-	if (lastRenderSettings.additive) {
-		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-		glDepthMask(GL_TRUE);
-	}
+	lastRenderSettings = renderSettings;
 }
 
 const std::string &LightwaveMesh::name() const {

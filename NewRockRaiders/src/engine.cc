@@ -95,10 +95,10 @@ int Engine::run() {
 	capT->rotation = glm::angleAxis(3.1415f, glm::vec3(0, 1, 0));// *glm::angleAxis(1.58f, glm::vec3(1, 0, 0));
 	auto capModel = captain.add<ModelComponent>();
 	capModel->create(archive_, "Captain");
-	capModel->playExternal("mini-figures/captain/new_captain_point_talking.lws");
+	capModel->playExternal("Activity_Stand", "mini-figures/captain/new_captain_point_talking.lws");
 
 	auto level = em_.create();
-	level.add<Level>()->load(em_, cfg, archive_, 1);
+	level.add<Level>()->load(em_, cfg, archive_, 9);
 
 	auto barracks = em_.create();
 	barracks.add<TransformComponent>()->position = glm::vec3(460, 40, 420);
@@ -272,13 +272,25 @@ bool Engine::setupUnits(ConfigParser &legoCfg) {
 	UnitCompendium::add(legoCfg, archive_, "Toolstation", UnitType::Building);
 	UnitCompendium::add(legoCfg, archive_, "TeleportPad", UnitType::Building);
 	UnitCompendium::add(legoCfg, archive_, "Docks", UnitType::Building);
-	UnitCompendium::add(legoCfg, archive_, "PowerStation", UnitType::Building);
+	UnitCompendium::add(legoCfg, archive_, "Powerstation", UnitType::Building);
 	UnitCompendium::add(legoCfg, archive_, "Barracks", UnitType::Building);
 	UnitCompendium::add(legoCfg, archive_, "Upgrade", UnitType::Building);
 	UnitCompendium::add(legoCfg, archive_, "Geo-dome", UnitType::Building);
 	UnitCompendium::add(legoCfg, archive_, "OreRefinery", UnitType::Building);
 	UnitCompendium::add(legoCfg, archive_, "Gunstation", UnitType::Building);
 	UnitCompendium::add(legoCfg, archive_, "TeleportBIG", UnitType::Building);
+
+	UnitCompendium::add(legoCfg, archive_, "PowerCrystal", UnitType::Resource, "miscanims/ore", "ore1st", UnitModelType::LightwaveScene); // No LWS file so use ore temporarily
+	UnitCompendium::add(legoCfg, archive_, "ProcessedOre", UnitType::Resource, "miscanims/brick", "singlestud", UnitModelType::LightwaveScene);
+	UnitCompendium::add(legoCfg, archive_, "Ore", UnitType::Resource, "miscanims/ore", "ore1st", UnitModelType::LightwaveScene);
+
+	// These don't seem to have LWS files
+	UnitCompendium::add(legoCfg, archive_, "Boulder", UnitType::Projectile);
+	UnitCompendium::add(legoCfg, archive_, "Pusher", UnitType::Projectile);
+	UnitCompendium::add(legoCfg, archive_, "Freezer", UnitType::Projectile);
+	UnitCompendium::add(legoCfg, archive_, "LaserShot", UnitType::Projectile);
+
+	UnitCompendium::add(legoCfg, archive_, "ElectricFence", UnitType::PlaceableBuilding, "building/e-fence", "efpackup", UnitModelType::LightwaveScene);
 
 	UnitFactory::archive_ = &archive_;
 

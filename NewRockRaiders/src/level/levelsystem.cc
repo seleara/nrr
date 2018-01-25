@@ -55,6 +55,7 @@ void LevelSystem::update() {
 					if (ray.intersects({ p1, p2, p3 }, point)) {
 						//std::cout << "Intersection at tile " << x << ", " << y << ".\n";
 						t.highlightColor = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+						t.highlighted = true;
 						t.dirty = true;
 						if (!found) {
 							ImGui::Text("TX: %f  TY: %f", x, y);
@@ -66,6 +67,7 @@ void LevelSystem::update() {
 					} else {
 						if (t.highlightColor != glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)) {
 							t.highlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+							t.highlighted = false;
 							t.dirty = true;
 						}
 					}

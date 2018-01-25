@@ -237,7 +237,7 @@ void AnimatedEntityResource::load(WadArchive &archive, const std::string &path) 
 	//loadAnimation("Activity_Drill");
 }
 
-ModelAnimation *AnimatedEntityResource::loadExternalAnimation(const std::string &path) {
+ModelAnimation *AnimatedEntityResource::loadExternalAnimation(const std::string &animationName, const std::string &path) {
 	auto animationFile = folder_ + path;
 
 	auto anim = LightwaveAnimationLoader::load(*archive_, animationFile);
@@ -245,7 +245,7 @@ ModelAnimation *AnimatedEntityResource::loadExternalAnimation(const std::string 
 	/*auto anim = std::make_unique<LightwaveAnimation>(this);
 	anim->load(*archive_, animationFile);*/
 
-	animations_.insert({ path, anim });
+	animations_.insert({ animationName, anim });
 
 	return anim.get();
 }
@@ -260,7 +260,8 @@ ModelAnimation *AnimatedEntityResource::loadAnimation(const std::string &animati
 	/*auto anim = std::make_unique<LightwaveAnimation>(this);
 	anim->load(*archive_, animationFile);*/
 
-	animations_.insert({ activity, anim });
+	//animations_.insert({ activity, anim });
+	animations_.insert({ animationName, anim });
 
 	return anim.get();
 }
