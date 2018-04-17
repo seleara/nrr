@@ -131,6 +131,10 @@ void LightwaveAnimation::load(WadArchive &archive, const std::string &path) {
 			obj.parent = &objects_[obj.parentIndex - 1];
 		}
 	}
+
+	for (auto &obj : objects_) {
+
+	}
 }
 
 void LightwaveAnimation::fixedUpdate() {

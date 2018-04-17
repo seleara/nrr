@@ -187,6 +187,7 @@
     <ClInclude Include="include\nrr\math\transform.h" />
     <ClInclude Include="include\nrr\math\uniformbuffer.h" />
     <ClInclude Include="include\nrr\math\vertexbuffer.h" />
+    <ClInclude Include="include\nrr\model\formats\lightwavemesh.h" />
     <ClInclude Include="include\nrr\model\modelrenderingsystem.h" />
     <ClInclude Include="include\nrr\resource\texture\gl\gltextureatlas.h" />
     <ClInclude Include="include\nrr\resource\texture\textureatlas.h" />
